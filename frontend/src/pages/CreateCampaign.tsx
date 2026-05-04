@@ -27,6 +27,8 @@ import { Button } from '@/components/ui';
 
 export interface CreateCampaignLocationState {
   campaignDraft?: Partial<CampaignData>;
+  /** When set, skip the path picker and start the wizard at this step. */
+  initialStep?: number;
 }
 
 type Stage =
@@ -34,18 +36,23 @@ type Stage =
   | {
       kind: 'wizard';
       initialData: Partial<CampaignData>;
+      initialStep?: number;
     };
 
 export function CreateCampaign() {
   const location = useLocation();
-  const draftFromState = useMemo(() => {
-    const st = location.state as CreateCampaignLocationState | null;
-    return st?.campaignDraft;
-  }, [location.state]);
+  const stateFromLocation = useMemo(
+    () => (location.state ?? null) as CreateCampaignLocationState | null,
+    [location.state],
+  );
 
   const [stage, setStage] = useState<Stage>(() => {
-    if (draftFromState) {
-      return { kind: 'wizard', initialData: draftFromState };
+    if (stateFromLocation?.campaignDraft) {
+      return {
+        kind: 'wizard',
+        initialData: stateFromLocation.campaignDraft,
+        initialStep: stateFromLocation.initialStep,
+      };
     }
     return { kind: 'pick' };
   });
@@ -82,7 +89,7 @@ export function CreateCampaign() {
       >
         Switch path
       </Button>
-      <CampaignWizard initialData={stage.initialData} />
+      <CampaignWizard initialData={stage.initialData} initialStep={stage.initialStep} />
     </div>
   );
 }

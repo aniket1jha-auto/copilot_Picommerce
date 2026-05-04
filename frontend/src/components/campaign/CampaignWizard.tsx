@@ -185,12 +185,21 @@ interface Step {
 }
 
 function wizardSteps(campaignType: CampaignType): Step[] {
-  const step3Label = campaignType === 'journey' ? 'Build Flow' : 'Content & Schedule';
+  if (campaignType === 'journey') {
+    return [
+      { label: 'Setup', shortLabel: '1' },
+      { label: 'Audience', shortLabel: '2' },
+      { label: 'Build Flow', shortLabel: '3' },
+      { label: 'Review', shortLabel: '4' },
+    ];
+  }
+  // simple_send — Content & Schedule split into two focused steps.
   return [
     { label: 'Setup', shortLabel: '1' },
     { label: 'Audience', shortLabel: '2' },
-    { label: step3Label, shortLabel: '3' },
-    { label: 'Review', shortLabel: '4' },
+    { label: 'Schedule', shortLabel: '3' },
+    { label: 'Channel & Content', shortLabel: '4' },
+    { label: 'Review', shortLabel: '5' },
   ];
 }
 
@@ -270,14 +279,16 @@ const slideVariants = {
 
 interface CampaignWizardProps {
   initialData?: Partial<CampaignData>;
+  /** Optional step (1-based) to land on directly. Defaults to 1. */
+  initialStep?: number;
 }
 
-export function CampaignWizard({ initialData }: CampaignWizardProps = {}) {
+export function CampaignWizard({ initialData, initialStep }: CampaignWizardProps = {}) {
   const navigate = useNavigate();
   const createCampaign = useCampaignStore((s) => s.createCampaign);
   const { segments } = usePhaseData();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(initialStep ?? 1);
   const [direction, setDirection] = useState(1);
   const [campaignData, setCampaignData] = useState<CampaignData>(() => ({
     ...INITIAL_DATA,
@@ -459,9 +470,20 @@ export function CampaignWizard({ initialData }: CampaignWizardProps = {}) {
             {currentStep === 1 && <SetupStep {...stepProps} />}
             {currentStep === 2 && <AudienceStep {...stepProps} />}
             {currentStep === 3 && campaignData.campaignType === 'simple_send' && (
-              <ContentScheduleStep {...stepProps} />
+              <ContentScheduleStep {...stepProps} view="schedule" />
             )}
-            {currentStep === 4 && <ReviewStep {...stepProps} />}
+            {currentStep === 4 && campaignData.campaignType === 'simple_send' && (
+              <ContentScheduleStep {...stepProps} view="content" />
+            )}
+            {/* Journey campaigns only have 4 steps: their step 3 is the
+                journey canvas (handled in the early-return above), and
+                step 4 is Review. */}
+            {currentStep === 4 && campaignData.campaignType === 'journey' && (
+              <ReviewStep {...stepProps} />
+            )}
+            {currentStep === 5 && campaignData.campaignType === 'simple_send' && (
+              <ReviewStep {...stepProps} />
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -484,6 +506,7 @@ export function CampaignWizard({ initialData }: CampaignWizardProps = {}) {
           {isLastStep ? 'Launch Campaign' : 'Next'}
         </button>
       </div>
+
     </div>
   );
 }

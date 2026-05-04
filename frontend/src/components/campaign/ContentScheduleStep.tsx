@@ -18,6 +18,9 @@ import {
   makeInitialVariant,
 } from './ChannelContentEditor';
 import type { ContentVariant, TestingConfig, AnyChannelContent } from './ChannelContentEditor';
+import { loadContentTemplates } from '@/utils/contentTemplatesStore';
+import type { ContentTemplateRow, TemplateChannel } from '@/types/contentLibrary';
+import { Link as RouterLink } from 'react-router-dom';
 
 const EVENT_CATALOG: Array<{ source: CampaignData['schedule']['event']['source']; name: string }> = [
   { source: 'app', name: 'app_opened' },
@@ -253,6 +256,19 @@ function SimpleDropdownSelect<T extends string>({
 interface ContentScheduleStepProps {
   campaignData: CampaignData;
   onUpdate: (updates: Partial<CampaignData>) => void;
+  /**
+   * Which slice of the step to render. Phase 4.x splits the original
+   * combined "Content & Schedule" step into two:
+   *   - 'schedule' renders the schedule mode picker, the per-mode details,
+   *     and the Smart + AI window/goal-focus configuration. The
+   *     "Generate suggested plan" button is intentionally hidden here.
+   *   - 'content'  renders channels & message content (non-smart_ai modes)
+   *     OR the auto-generated plan (smart_ai). Plan generation fires on
+   *     mount when smart_ai is selected and no plan exists yet.
+   *   - 'all' (default) keeps the original behavior — used by anything
+   *     that hasn't migrated to the split.
+   */
+  view?: 'schedule' | 'content' | 'all';
 }
 
 const SMS_ACCOUNTS = ['Paytm SMS — Primary', 'Paytm SMS — Transactional', 'Custom'] as const;
@@ -656,7 +672,9 @@ function ChannelRow({
 
 // ─── ContentScheduleStep (simple send: channels + content + schedule) ───────
 
-export function ContentScheduleStep({ campaignData, onUpdate }: ContentScheduleStepProps) {
+export function ContentScheduleStep({ campaignData, onUpdate, view = 'all' }: ContentScheduleStepProps) {
+  const showSchedule = view === 'schedule' || view === 'all';
+  const showContent = view === 'content' || view === 'all';
   const { segments, isAtLeast } = usePhaseData();
 
   const selectedSegment = segments.find((s) => s.id === campaignData.segmentId);
@@ -868,16 +886,88 @@ export function ContentScheduleStep({ campaignData, onUpdate }: ContentScheduleS
           ? `₹${smartEstimatedCost.toFixed(2)}`
           : '—';
 
+  // Plan generation — used by both the explicit button (legacy 'all' view)
+  // and the auto-fire effect when the user lands on the Channel & Content
+  // step in Smart + AI mode.
+  function generateSmartPlan(): { ok: boolean; reason?: string; count?: number } {
+    if (campaignData.channels.length === 0) {
+      return { ok: false, reason: 'Select at least one channel to generate a plan.' };
+    }
+    const planSegmentSize = selectedSegment?.size ?? 0;
+    if (planSegmentSize <= 0) {
+      return { ok: false, reason: 'Set your audience (Step 2) to generate a plan.' };
+    }
+    const budgetInput = campaignData.goal.tentativeBudget || '';
+    const tentativeBudgetParsed = budgetInput
+      ? parseFloat(budgetInput.replace(/[₹,]/g, '')) *
+        (budgetInput.toLowerCase().includes('l')
+          ? 100000
+          : budgetInput.toLowerCase().includes('k')
+            ? 1000
+            : 1)
+      : 0;
+    const subSegments = generateSmartSubSegments({
+      selectedChannels: campaignData.channels,
+      segmentSize: planSegmentSize,
+      highIntentEnabled: campaignData.highIntent.enabled,
+      highIntentCount: campaignData.highIntent.estimatedCount,
+      tentativeBudget: tentativeBudgetParsed,
+    });
+    onUpdate({
+      waterfallConfig: {
+        ...(campaignData.waterfallConfig as Record<string, unknown>),
+        subSegments,
+        generatedAt: new Date().toISOString(),
+      },
+    });
+    return { ok: subSegments.length > 0, count: subSegments.length };
+  }
+
+  // Auto-fire plan generation on mount when arriving at the Channel & Content
+  // step in Smart + AI mode and no plan exists yet.
+  useEffect(() => {
+    if (
+      view === 'content' &&
+      campaignData.schedule.type === 'smart_ai' &&
+      (!smartPlanSubSegments || smartPlanSubSegments.length === 0)
+    ) {
+      const result = generateSmartPlan();
+      if (!result.ok && result.reason) {
+        setSmartPlanNotice(result.reason);
+      } else if (result.ok && result.count) {
+        setSmartPlanNotice(`Generated ${result.count} sub-segments.`);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, campaignData.schedule.type]);
+
+  // Step header — shown when this component is acting as a single step. When
+  // split into Schedule / Channel & Content, the wizard's stepper provides
+  // the page-level context, so we use a per-view title instead.
+  const stepTitle =
+    view === 'schedule'
+      ? 'Schedule'
+      : view === 'content'
+        ? 'Channel & Content'
+        : 'Content & Schedule';
+  const stepSubtitle =
+    view === 'schedule'
+      ? 'Choose when and how this campaign runs. Smart + AI generates the cohort, channel, and timing plan in the next step.'
+      : view === 'content'
+        ? campaignData.schedule.type === 'smart_ai'
+          ? 'Auto-generated cohort + channel + timing plan based on your audience and the schedule window.'
+          : 'Enable channels and configure message variants for each.'
+        : 'Enable channels, configure message variants for each, then set when this campaign runs.';
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div>
-        <h2 className="text-base font-semibold text-text-primary">Content &amp; Schedule</h2>
-        <p className="mt-1 text-sm text-text-secondary">
-          Enable channels, configure message variants for each, then set when this campaign runs.
-        </p>
+        <h2 className="text-base font-semibold text-text-primary">{stepTitle}</h2>
+        <p className="mt-1 text-sm text-text-secondary">{stepSubtitle}</p>
       </div>
 
+      {showSchedule && (
       <div className="rounded-lg border border-[#E5E7EB] bg-white p-5">
         <h3 className="text-sm font-semibold text-text-primary">When &amp; how should we send?</h3>
         <p className="mt-0.5 text-xs text-text-secondary">
@@ -890,8 +980,9 @@ export function ContentScheduleStep({ campaignData, onUpdate }: ContentScheduleS
           <ScheduleModeCard id="smart_ai" title="Smart + AI" description="Set a window. Our intelligence engine designs the sub-cohort + channel + timing plan with fallbacks." />
         </div>
       </div>
+      )}
 
-      {campaignData.schedule.type !== 'smart_ai' && (
+      {showSchedule && campaignData.schedule.type !== 'smart_ai' && (
         <div className="rounded-lg border border-[#E5E7EB] bg-white p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -1529,8 +1620,10 @@ export function ContentScheduleStep({ campaignData, onUpdate }: ContentScheduleS
         </div>
       )}
 
-      {campaignData.schedule.type === 'smart_ai' && (
+      {(showSchedule || showContent) && campaignData.schedule.type === 'smart_ai' && (
         <div className="rounded-lg border border-[#E5E7EB] bg-white p-5">
+        {showSchedule && (
+        <>
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="text-sm font-semibold text-text-primary">Smart campaign setup</h3>
@@ -1764,7 +1857,22 @@ export function ContentScheduleStep({ campaignData, onUpdate }: ContentScheduleS
               <li>Produce a draft journey you can refine in the canvas (edit steps, wait, and escalation).</li>
             </ol>
           </div>
+        </>
+        )}
 
+        {showContent && !showSchedule && (
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-text-primary">Campaign plan</h3>
+              <p className="mt-0.5 text-xs text-text-secondary">
+                Auto-generated based on your audience, channels, and the schedule window. Each
+                sub-segment follows a tailored sequence — edit any row to refine.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {view === 'all' && (
           <button
             type="button"
             onClick={() => {
@@ -1815,10 +1923,13 @@ export function ContentScheduleStep({ campaignData, onUpdate }: ContentScheduleS
           >
             Generate suggested plan &amp; primary draft
           </button>
+        )}
 
-          {smartPlanNotice && <p className="mt-2 text-xs text-text-secondary">{smartPlanNotice}</p>}
+        {showContent && smartPlanNotice && (
+          <p className="mt-2 text-xs text-text-secondary">{smartPlanNotice}</p>
+        )}
 
-          {smartPlanSubSegments && smartPlanSubSegments.length > 0 && (
+        {showContent && smartPlanSubSegments && smartPlanSubSegments.length > 0 && (
             <div className="mt-4 rounded-lg border border-[#E5E7EB] bg-white">
               <div className="flex items-start justify-between gap-4 border-b border-[#E5E7EB] px-4 py-3">
                 <div>
@@ -1871,7 +1982,7 @@ export function ContentScheduleStep({ campaignData, onUpdate }: ContentScheduleS
         </div>
       )}
 
-      {campaignData.schedule.type !== 'smart_ai' && (
+      {showContent && campaignData.schedule.type !== 'smart_ai' && (
         <div className="rounded-lg border border-[#E5E7EB] bg-white p-5">
           <h3 className="text-sm font-semibold text-text-primary">Channels &amp; message content</h3>
           <p className="mt-0.5 text-xs text-text-secondary">
@@ -2496,6 +2607,14 @@ function SmartPlanSubSegmentRow({
     onPatch({ journey: updated });
   }
 
+  function patchStepTemplate(stepIdx: number, templateId: string | undefined) {
+    if (journey.length === 0 || stepIdx < 0 || stepIdx >= journey.length) return;
+    const updated = journey.map((step, idx) =>
+      idx === stepIdx ? { ...step, templateId } : step,
+    );
+    onPatch({ journey: updated });
+  }
+
   return (
     <div className="px-4 py-3">
       {/* Header — always visible */}
@@ -2668,6 +2787,41 @@ function SmartPlanSubSegmentRow({
               value={conversionPct !== null && conversionPct > 0 ? `${conversionPct.toFixed(1)}%` : '—'}
             />
           </div>
+
+          {/* Per-channel templates from the content library. Visible whenever
+              the row is expanded — pickable in any state, not gated by Edit. */}
+          <div className="rounded-lg border border-[#E5E7EB] bg-white p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
+                Message templates
+              </p>
+              <span className="text-[10px] text-text-tertiary">
+                Pulled from content library
+              </span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {journey.length === 0 ? (
+                <p className="col-span-full text-[11px] italic text-text-tertiary">
+                  No journey steps yet.
+                </p>
+              ) : (
+                journey.map((step, idx) => {
+                  const stepChannel = (step.channelId as ChannelType | undefined) ?? primaryChannel;
+                  const stepTemplateId =
+                    typeof step.templateId === 'string' ? (step.templateId as string) : undefined;
+                  return (
+                    <SmartPlanTemplatePicker
+                      key={`${idx}-${stepChannel}`}
+                      stepIdx={idx}
+                      channel={stepChannel}
+                      templateId={stepTemplateId}
+                      onChange={patchStepTemplate}
+                    />
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -2681,6 +2835,95 @@ function SmartPlanDetail({ label, value }: { label: string; value: React.ReactNo
         {label}
       </span>
       <span className="truncate text-xs font-medium text-text-primary">{value}</span>
+    </div>
+  );
+}
+
+const TEMPLATE_CHANNELS: ChannelType[] = ['whatsapp', 'sms', 'rcs'];
+
+function isTemplateChannel(channel: ChannelType): channel is TemplateChannel {
+  return (TEMPLATE_CHANNELS as ChannelType[]).includes(channel);
+}
+
+interface SmartPlanTemplatePickerProps {
+  /** Position in the journey (0 = primary, 1 = fallback). */
+  stepIdx: number;
+  channel: ChannelType;
+  templateId: string | undefined;
+  onChange: (stepIdx: number, templateId: string | undefined) => void;
+}
+
+/**
+ * Per-channel template picker rendered inside an expanded SmartPlan row.
+ * Reads from the same content library store the manual wizard uses so the
+ * Smart + AI flow stays in sync with anything created in /content-library.
+ */
+function SmartPlanTemplatePicker({
+  stepIdx,
+  channel,
+  templateId,
+  onChange,
+}: SmartPlanTemplatePickerProps) {
+  const [templates, setTemplates] = useState<ContentTemplateRow[]>([]);
+  useEffect(() => {
+    setTemplates(loadContentTemplates());
+  }, []);
+
+  if (!isTemplateChannel(channel)) {
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
+          {channelDisplayName(channel)} template
+        </span>
+        <span className="text-[11px] italic text-text-tertiary">
+          {channel === 'ai_voice'
+            ? 'Voice script configured on the AI Voice agent.'
+            : 'Templates not available for this channel.'}
+        </span>
+      </div>
+    );
+  }
+
+  const filtered = templates.filter(
+    (t) => t.channel === channel && t.status === 'approved',
+  );
+  const selected = templates.find((t) => t.id === templateId);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
+          {channelDisplayName(channel)} template
+        </span>
+        <RouterLink
+          to="/content-library"
+          className="shrink-0 text-[10px] font-semibold text-cyan hover:underline"
+        >
+          Open library →
+        </RouterLink>
+      </div>
+      <select
+        value={templateId ?? ''}
+        onChange={(e) => onChange(stepIdx, e.target.value || undefined)}
+        className="min-w-0 rounded-md border border-[#E5E7EB] bg-white px-2 py-1.5 text-xs text-text-primary focus:border-cyan focus:outline-none focus:ring-1 focus:ring-cyan/30"
+      >
+        <option value="">Select template…</option>
+        {filtered.length === 0 && (
+          <option value="" disabled>
+            No approved templates yet
+          </option>
+        )}
+        {filtered.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name}
+          </option>
+        ))}
+      </select>
+      {selected && (
+        <p className="line-clamp-2 text-[11px] leading-snug text-text-secondary">
+          {selected.bodyPreview}
+        </p>
+      )}
     </div>
   );
 }

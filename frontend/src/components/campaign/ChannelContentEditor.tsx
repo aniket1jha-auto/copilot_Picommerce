@@ -390,8 +390,8 @@ function TemplatePicker({
   });
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <div className="flex min-w-[220px] flex-1 items-center gap-2">
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
         <select
           value={selectedId}
           onChange={(e) => {
@@ -403,7 +403,7 @@ function TemplatePicker({
               setSelectedId('');
             }
           }}
-          className="w-full max-w-[360px] rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-text-primary outline-none focus:border-cyan focus:ring-2 focus:ring-cyan/20"
+          className="min-w-0 flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-text-primary outline-none focus:border-cyan focus:ring-2 focus:ring-cyan/20"
         >
           <option value="">Select from Content Library…</option>
           {filtered.length === 0 && <option value="" disabled>No templates available</option>}
@@ -413,7 +413,10 @@ function TemplatePicker({
             </option>
           ))}
         </select>
-        <RouterLink to="/content-library" className="text-xs font-semibold text-cyan hover:underline">
+        <RouterLink
+          to="/content-library"
+          className="shrink-0 whitespace-nowrap text-xs font-semibold text-cyan hover:underline"
+        >
           Open library →
         </RouterLink>
       </div>
@@ -539,8 +542,11 @@ function WhatsAppPanel({
   onSuggestCopy: () => void;
   templateOnly?: boolean;
 }) {
+  // Stack form + preview on narrow containers (e.g. JourneyNodeConfigPanel
+  // drawer) and split into 2 columns only when there's room.
   return (
-    <div className="grid grid-cols-2 gap-5">
+    <div className="@container">
+    <div className="grid grid-cols-1 gap-5 @[640px]:grid-cols-2">
       <div className="flex flex-col gap-4">
         <TemplatePicker channel="whatsapp" onApplyBody={(body) => onContentChange({ ...content, body })} />
         <div>
@@ -634,6 +640,7 @@ function WhatsAppPanel({
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

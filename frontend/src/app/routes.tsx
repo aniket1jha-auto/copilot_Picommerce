@@ -4,6 +4,8 @@ import { Dashboard } from '@/pages/Dashboard';
 
 import { Campaigns } from '@/pages/Campaigns';
 import { CreateCampaign } from '@/pages/CreateCampaign';
+import { CampaignCopilotChat } from '@/pages/CampaignCopilotChat';
+import { CampaignCopilotReview } from '@/pages/CampaignCopilotReview';
 import { CampaignDetail } from '@/pages/CampaignDetail';
 import { CampaignFlow } from '@/pages/CampaignFlow';
 import { EditCampaign } from '@/pages/EditCampaign';
@@ -51,6 +53,8 @@ export function AppRoutes() {
       {/* BUILD — Campaigns (first per ADR 0002) */}
       <Route path="/campaigns" element={<Campaigns />} />
       <Route path="/campaigns/new" element={<CreateCampaign />} />
+      <Route path="/campaigns/copilot" element={<CampaignCopilotChat />} />
+      <Route path="/campaigns/copilot/review" element={<CampaignCopilotReview />} />
       <Route path="/campaigns/:id" element={<CampaignDetail />} />
       <Route path="/campaigns/:id/flow" element={<CampaignFlow />} />
       <Route path="/campaigns/:id/edit" element={<EditCampaign />} />
