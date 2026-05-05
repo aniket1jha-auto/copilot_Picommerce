@@ -369,8 +369,9 @@ export function processBuilding(
     };
   }
 
-  // Special: explicit "show audiences"
-  if (/^(show|list|what|which)\s+(?:are\s+)?(?:my\s+)?(?:audiences|segments)\b/i.test(input)) {
+  // Special: explicit "show audiences" — also matches phrasings like
+  // "show me my audiences", "list all segments", "what audiences do I have".
+  if (/^(show|list|what|which|browse)\b.*\b(audience|segment)s?\b/i.test(input)) {
     if (ctx.segments.length === 0) {
       return {
         text: 'No segments to show — create one under Audiences first.',

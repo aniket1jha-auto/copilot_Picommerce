@@ -85,6 +85,12 @@ interface JourneyBuilderStepProps {
   onNext?: () => void;
   onSaveDraft?: () => void;
   isLastStep?: boolean;
+  /**
+   * Hide the docked footer (Back / Save draft / Launch). Used by the
+   * Campaign Copilot review surface, which renders its own header-level
+   * controls and doesn't want a duplicate bottom bar.
+   */
+  hideFooter?: boolean;
 }
 
 function hasTrigger(nodes: JourneyFlowNode[]) {
@@ -115,6 +121,7 @@ function JourneyBuilderCanvas({
   onNext,
   onSaveDraft,
   isLastStep,
+  hideFooter,
 }: JourneyBuilderStepProps) {
   const journey = campaignData.journey;
   const { fitView, screenToFlowPosition, zoomIn, zoomOut } = useReactFlow();
@@ -797,19 +804,22 @@ function JourneyBuilderCanvas({
         />
       </div>
 
-      {/* Docked footer (always visible) */}
-      <JourneyCanvasFooter
-        onBack={onBack ?? (() => undefined)}
-        onSaveDraft={onSaveDraft ?? (() => undefined)}
-        onNext={onNext ?? (() => undefined)}
-        isLastStep={isLastStep ?? false}
-        nextDisabled={validation.issues.length > 0}
-        nextDisabledReason={
-          validation.issues.length > 0
-            ? `${validation.issues.length} validation issue${validation.issues.length === 1 ? '' : 's'} — open the validate popover to review`
-            : undefined
-        }
-      />
+      {/* Docked footer (Back / Save / Launch) — suppressed in Copilot mode
+          where the page renders its own header-level controls. */}
+      {!hideFooter && (
+        <JourneyCanvasFooter
+          onBack={onBack ?? (() => undefined)}
+          onSaveDraft={onSaveDraft ?? (() => undefined)}
+          onNext={onNext ?? (() => undefined)}
+          isLastStep={isLastStep ?? false}
+          nextDisabled={validation.issues.length > 0}
+          nextDisabledReason={
+            validation.issues.length > 0
+              ? `${validation.issues.length} validation issue${validation.issues.length === 1 ? '' : 's'} — open the validate popover to review`
+              : undefined
+          }
+        />
+      )}
 
       <PrebuiltJourneyModal
         open={templateOpen}

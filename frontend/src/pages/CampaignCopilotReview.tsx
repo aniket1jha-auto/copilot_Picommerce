@@ -11,6 +11,7 @@ import {
 } from '@/components/campaign/CampaignWizard';
 import { JourneyBuilderStep } from '@/components/campaign/journey/JourneyBuilderStep';
 import { buildPrebuiltJourney } from '@/components/campaign/journey/journeyTemplates';
+import { validateJourney } from '@/components/campaign/journey/journeyValidation';
 
 // Suppress unused-import noise — we only need the type from the wizard module.
 void _wizardForType;
@@ -106,6 +107,15 @@ export function CampaignCopilotReview() {
 
   const segmentForDisplay = segments.find((s) => s.id === campaignData.segmentId);
 
+  // Validate the journey on every state change so the Launch button can
+  // disable until the canvas is clean. Same logic the wizard footer uses.
+  const validation = useMemo(
+    () => validateJourney(campaignData.journey.nodes, campaignData.journey.edges),
+    [campaignData.journey.nodes, campaignData.journey.edges],
+  );
+  const issueCount = validation.issues.length;
+  const launchReady = issueCount === 0;
+
   return (
     <div
       className="-mx-8 -mb-5 flex flex-col"
@@ -114,7 +124,10 @@ export function CampaignCopilotReview() {
       <CopilotReviewHeader
         campaignName={campaignData.name || 'Untitled Campaign'}
         onBack={handleBackToChat}
+        onSaveDraft={handleSaveDraft}
         onLaunch={handleLaunch}
+        launchReady={launchReady}
+        issueCount={issueCount}
       />
       <CampaignContextStrip
         name={campaignData.name || 'Untitled Campaign'}
@@ -130,6 +143,7 @@ export function CampaignCopilotReview() {
           onNext={handleLaunch}
           onSaveDraft={handleSaveDraft}
           isLastStep
+          hideFooter
         />
       </div>
     </div>
@@ -268,10 +282,23 @@ function ContextField({
 interface HeaderProps {
   campaignName: string;
   onBack: () => void;
+  onSaveDraft: () => void;
   onLaunch: () => void;
+  launchReady: boolean;
+  issueCount: number;
 }
 
-function CopilotReviewHeader({ campaignName, onBack, onLaunch }: HeaderProps) {
+function CopilotReviewHeader({
+  campaignName,
+  onBack,
+  onSaveDraft,
+  onLaunch,
+  launchReady,
+  issueCount,
+}: HeaderProps) {
+  const launchDisabledReason = launchReady
+    ? undefined
+    : `${issueCount} validation issue${issueCount === 1 ? '' : 's'} on the canvas — fix before launching.`;
   return (
     <header className="shrink-0 border-b border-[#E5E7EB] bg-white">
       <div className="flex items-center justify-between gap-4 px-6 py-3">
@@ -299,15 +326,40 @@ function CopilotReviewHeader({ campaignName, onBack, onLaunch }: HeaderProps) {
             </div>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onLaunch}
-          className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-cyan to-purple-500 px-4 py-2 text-[13px] font-semibold text-white shadow-[0_4px_12px_-4px_rgba(34,179,229,0.55)] transition-shadow hover:shadow-[0_6px_16px_-4px_rgba(34,179,229,0.7)]"
-        >
-          <Rocket size={14} />
-          Launch campaign
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSaveDraft}
+            className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-white px-3 py-2 text-[13px] font-medium text-text-secondary transition-colors hover:border-[#D1D5DB] hover:bg-[#F9FAFB] hover:text-text-primary"
+          >
+            Save draft
+          </button>
+          <button
+            type="button"
+            onClick={onLaunch}
+            disabled={!launchReady}
+            title={launchDisabledReason}
+            className={[
+              'inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-[13px] font-semibold transition-all',
+              launchReady
+                ? 'bg-gradient-to-r from-cyan to-purple-500 text-white shadow-[0_4px_12px_-4px_rgba(34,179,229,0.55)] hover:shadow-[0_6px_16px_-4px_rgba(34,179,229,0.7)]'
+                : 'cursor-not-allowed bg-[#F3F4F6] text-text-tertiary ring-1 ring-[#E5E7EB]',
+            ].join(' ')}
+          >
+            <Rocket size={14} />
+            Launch campaign
+          </button>
+        </div>
       </div>
+      {!launchReady && (
+        <div className="border-t border-[#FDE68A] bg-[#FEF3C7] px-6 py-1.5 text-[11.5px] text-amber-800">
+          {issueCount} {issueCount === 1 ? 'issue' : 'issues'} on the canvas — open the
+          <span className="mx-1 inline-flex items-center rounded bg-white/70 px-1 font-medium text-amber-900">
+            Validate
+          </span>
+          popover on the canvas to review and resolve.
+        </div>
+      )}
     </header>
   );
 }
