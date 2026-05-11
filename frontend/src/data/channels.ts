@@ -87,7 +87,7 @@ export const channels: ChannelDefinition[] = [
     id: 'facebook_ads',
     name: 'Facebook Ads',
     type: 'digital',
-    unitCost: 0.15, // ₹150 per 1K impressions = ₹0.15 per impression
+    unitCost: 0.15, // AED 150 per 1K impressions = AED 0.15 per impression
     icon: 'Facebook',
     color: '#1877F2',
   },
@@ -95,7 +95,7 @@ export const channels: ChannelDefinition[] = [
     id: 'instagram_ads',
     name: 'Instagram Ads',
     type: 'digital',
-    unitCost: 0.15, // ₹150 per 1K impressions = ₹0.15 per impression
+    unitCost: 0.15, // AED 150 per 1K impressions = AED 0.15 per impression
     icon: 'Instagram',
     color: '#E4405F',
   },

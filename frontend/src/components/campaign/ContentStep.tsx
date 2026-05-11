@@ -78,92 +78,92 @@ interface TestingConfig {
 const AI_VARIANTS: Partial<Record<ChannelType, AnyChannelContent[]>> = {
   sms: [
     {
-      body: 'Complete your KYC now & get ₹100 cashback. Click: https://p.me/kyc',
+      body: 'Verify your Emirates ID in 2 mins & unlock full account features. Tap: https://p.me/verify',
     } satisfies SMSContent,
     {
-      body: '⏰ Last 24 hours to complete KYC! Avoid wallet limits. Verify now: https://p.me/kyc',
+      body: '⏰ Last 24 hours to verify your Emirates ID — avoid account limits. Verify now: https://p.me/verify',
     } satisfies SMSContent,
     {
-      body: 'Join 50L+ verified users on Paytm. Complete KYC in 2 mins: https://p.me/kyc',
+      body: 'تحقّق من هويتك الإماراتية الآن لتفعيل حسابك بالكامل. اضغط هنا: https://p.me/verify',
     } satisfies SMSContent,
   ],
   whatsapp: [
     {
-      body: 'Hi! You have a pre-approved personal loan of up to ₹5,00,000 on Paytm — zero processing fee, instant disbursal. Check your offer and apply today. Valid for 48 hours only.',
-      imageUrl: 'https://placehold.co/400x200/00BAF2/FFFFFF?text=Paytm+Loan+Offer',
+      body: 'Hi! You have a pre-approved personal loan of up to AED 50,000 with 0% processing fee and 24-hour disbursal. Check your offer today — valid for 48 hours only.',
+      imageUrl: 'https://placehold.co/400x200/0EA597/FFFFFF?text=Paytm+UAE+Loan+Offer',
       ctaText: 'View My Loan Offer',
     } satisfies WhatsAppContent,
     {
-      body: "Hey! Quick question — did you know you have a pre-approved loan waiting? ₹5L, zero fee, and it takes just 2 minutes to check. Want to see your offer?",
+      body: "Hi there — did you know you have a pre-approved loan waiting? Up to AED 50,000, zero processing fee, two-minute approval. Want to see your offer?",
       imageUrl: '',
       ctaText: 'Check My Offer',
     } satisfies WhatsAppContent,
     {
-      body: '₹5L at your fingertips. Zero processing fee. 2-minute approval. Your credit profile qualifies — claim your offer before it expires tonight.',
+      body: 'مرحباً! لديك عرض قرض شخصي معتمد مسبقاً يصل إلى AED 50,000 — بدون رسوم معالجة وصرف خلال 24 ساعة. شاهد عرضك الآن قبل انتهاء صلاحيته.',
       imageUrl: 'https://placehold.co/400x200/6366F1/FFFFFF?text=Claim+Your+Offer',
-      ctaText: 'Claim Now',
+      ctaText: 'View Offer',
     } satisfies WhatsAppContent,
   ],
   push_notification: [
     {
-      title: 'Complete KYC & unlock ₹100 cashback',
-      body: 'Your KYC is pending. Finish in 2 minutes and get ₹100 cashback credited instantly.',
-      deepLinkUrl: 'paytm://kyc/complete',
+      title: 'Verify your Emirates ID',
+      body: 'Two minutes to finish verification and unlock your account features.',
+      deepLinkUrl: 'paytm://verify/emirates-id',
       imageUrl: '',
     } satisfies PushNotificationContent,
     {
-      title: '🎉 Hey! Free ₹100 is waiting for you 👀',
-      body: "Just 2 mins away from ₹100 cashback! Tap now, finish KYC & we'll drop the cash right in. Don't miss it! ⚡",
-      deepLinkUrl: 'paytm://kyc/complete',
-      imageUrl: 'https://placehold.co/400x200/10B981/FFFFFF?text=₹100+Cashback',
+      title: '🎁 AED 50 cashback is waiting',
+      body: "Verify your account today and get AED 50 cashback credited instantly. Tap to verify.",
+      deepLinkUrl: 'paytm://verify/emirates-id',
+      imageUrl: 'https://placehold.co/400x200/10B981/FFFFFF?text=AED+50+Cashback',
     } satisfies PushNotificationContent,
     {
-      title: '⏰ KYC deadline tonight — act now!',
-      body: 'Your wallet will be restricted after midnight if KYC is incomplete. Takes only 2 mins. Tap to secure your account.',
-      deepLinkUrl: 'paytm://kyc/complete',
+      title: '⏰ Verify by midnight to keep your account active',
+      body: 'Your account will be restricted after midnight if Emirates ID verification is incomplete. Two minutes to secure it.',
+      deepLinkUrl: 'paytm://verify/emirates-id',
       imageUrl: '',
     } satisfies PushNotificationContent,
   ],
   rcs: [
     {
-      body: 'Exclusive offer: Paytm Gold starting ₹1. Invest in digital gold securely — anytime, anywhere.',
-      imageUrl: 'https://placehold.co/400x200/F59E0B/FFFFFF?text=Paytm+Gold',
-      button1: 'Start Investing',
-      button2: 'Learn More',
+      body: 'Ramadan offer: get AED 100 off on your first three transactions this month. Secure shopping, instant cashback.',
+      imageUrl: 'https://placehold.co/400x200/F59E0B/FFFFFF?text=Ramadan+Offer',
+      button1: 'Shop Now',
+      button2: 'See Terms',
     } satisfies RCSContent,
     {
-      body: "Psst — gold prices just dipped! 😍 This is your moment to start investing. Even ₹1 gets you started with Paytm Gold today.",
-      imageUrl: 'https://placehold.co/400x200/F59E0B/FFFFFF?text=Gold+Dip+Alert',
-      button1: 'Invest ₹1 Now',
-      button2: 'See Live Price',
+      body: 'رمضان كريم! استمتع بخصم AED 100 على أول ثلاث معاملات. تسوّق آمن واسترداد فوري للنقد.',
+      imageUrl: 'https://placehold.co/400x200/F59E0B/FFFFFF?text=Ramadan+Promo',
+      button1: 'تسوّق الآن',
+      button2: 'الشروط',
     } satisfies RCSContent,
     {
-      body: '🚨 Gold prices rising — buy before it goes up further! Over 2 crore Indians already invest with Paytm Gold. Secure your wealth today.',
-      imageUrl: 'https://placehold.co/400x200/EF4444/FFFFFF?text=Buy+Before+It+Rises',
-      button1: 'Buy Gold Now',
-      button2: 'Price Chart',
+      body: 'Eid Mubarak! Get up to AED 250 cashback this Eid across grocery, fashion, and travel partners. Limited time offer.',
+      imageUrl: 'https://placehold.co/400x200/0EA597/FFFFFF?text=Eid+Cashback',
+      button1: 'Browse Offers',
+      button2: 'Eid Specials',
     } satisfies RCSContent,
   ],
   in_app_banner: [
     {
-      headline: 'Pre-approved Loan — ₹5L at 10.5% p.a.',
-      body: 'Your credit profile qualifies for an instant personal loan. Zero processing fee, disbursal in 2 hours.',
+      headline: 'Pre-approved Loan — up to AED 50,000 @ 6.99% APR',
+      body: 'Your credit profile qualifies for an instant personal loan. Zero processing fee, disbursal within 24 hours.',
       ctaText: 'Check My Offer',
       backgroundColor: '#0EA5E9',
       position: 'bottom',
       expiryHours: 24,
     } satisfies InAppBannerContent,
     {
-      headline: "Hey, your ₹5L loan is just waiting 👋",
-      body: "We crunched the numbers — you're approved! Zero fee, instant money. Tap to see your personalised offer.",
+      headline: "Your AED 50,000 loan offer is ready 👋",
+      body: "Zero processing fee, instant approval. Tap to see your personalised terms before it expires tonight.",
       ctaText: 'See My Offer',
       backgroundColor: '#6366F1',
       position: 'bottom',
       expiryHours: 24,
     } satisfies InAppBannerContent,
     {
-      headline: '⏳ Offer expires in 24 hours!',
-      body: 'Your pre-approved ₹5L loan offer expires tonight. Grab it before it\u0027s gone — zero processing fee.',
+      headline: '⏳ Offer expires in 24 hours',
+      body: 'Your pre-approved AED 50,000 loan offer expires tonight. Zero processing fee — claim before it expires.',
       ctaText: 'Claim Before It Expires',
       backgroundColor: '#EF4444',
       position: 'modal',
@@ -188,25 +188,25 @@ const CHANNEL_LABELS: Record<ChannelType, string> = {
 
 const SAMPLE_COPY: Record<ChannelType, AnyChannelContent> = {
   sms: {
-    body: 'Dear Customer, complete your Paytm KYC in 2 mins & unlock full wallet access + ₹100 cashback. Click: https://p.me/kyc-now STOP to opt out.',
+    body: 'Dear Customer, verify your Emirates ID in 2 mins to unlock full account features + AED 50 cashback. Tap: https://p.me/verify Reply STOP to opt out.',
   } satisfies SMSContent,
   whatsapp: {
-    body: 'Hi! You have a pre-approved personal loan of up to ₹5,00,000 on Paytm — zero processing fee, instant disbursal. Check your offer and apply today. Valid for 48 hours only.',
-    imageUrl: 'https://placehold.co/400x200/00BAF2/FFFFFF?text=Paytm+Loan+Offer',
+    body: 'Hi! You have a pre-approved personal loan of up to AED 50,000 with 0% processing fee and 24-hour disbursal. Check your offer today — valid for 48 hours only.',
+    imageUrl: 'https://placehold.co/400x200/0EA597/FFFFFF?text=Paytm+UAE+Loan+Offer',
     ctaText: 'View My Loan Offer',
   } satisfies WhatsAppContent,
   rcs: {
-    body: 'Exclusive offer for you: Paytm Gold starting ₹1. Invest in digital gold securely — anytime, anywhere. Start your investment journey today.',
-    imageUrl: 'https://placehold.co/400x200/F59E0B/FFFFFF?text=Paytm+Gold',
-    button1: 'Start Investing',
-    button2: 'Learn More',
+    body: 'Ramadan offer: AED 100 off on your first three transactions this month. Secure shopping, instant cashback.',
+    imageUrl: 'https://placehold.co/400x200/F59E0B/FFFFFF?text=Ramadan+Offer',
+    button1: 'Shop Now',
+    button2: 'See Terms',
   } satisfies RCSContent,
   ai_voice: {
     script:
-      'Call the user and introduce yourself as calling from Paytm. Inform them about their pending KYC verification which is required to continue transacting. If they are interested, offer to help complete it right now on the call using their Aadhaar OTP. If they are busy, ask for a preferred callback time and confirm it.',
-    language: 'hinglish',
+      'Call the customer and introduce yourself as calling from Paytm UAE. Inform them their Emirates ID verification is pending and is required to continue using the account. If they are willing, walk them through verification on the call using the OTP sent to their registered mobile. If they are busy, capture a preferred callback time and confirm it back to them. Keep the tone respectful and professional throughout.',
+    language: 'english',
     voiceGender: 'female',
-    voiceTone: 'friendly',
+    voiceTone: 'professional',
     callWindowStart: '10:00',
     callWindowEnd: '19:00',
     maxRetries: 3,
@@ -217,37 +217,37 @@ const SAMPLE_COPY: Record<ChannelType, AnyChannelContent> = {
   field_executive: {
     taskType: 'KYC Verification',
     description:
-      'Visit the customer and assist them in completing their full KYC. Collect: Aadhaar card (original + copy), PAN card (original + copy), one recent passport-size photograph. Fill KYC form and get customer signature. Upload scanned copies to the app before leaving the premises.',
+      'Visit the customer to complete full account verification. Collect: Emirates ID (original + copy), one recent passport-size photograph, proof of residence (DEWA bill or tenancy contract). Complete the verification form, capture the customer signature, and upload scans to the app before leaving the premises.',
     priority: 'high',
     slaHours: 48,
   } satisfies FieldExecContent,
   push_notification: {
-    title: '🎁 Exclusive cashback waiting for you!',
-    body: 'Complete your first UPI transaction today and get ₹50 cashback instantly. Offer valid for 24 hours only. Tap to claim now!',
-    deepLinkUrl: 'paytm://cashback/claim?offer=upi50',
-    imageUrl: 'https://placehold.co/400x200/EF4444/FFFFFF?text=Paytm+Cashback',
+    title: '🎁 AED 50 cashback waiting for you',
+    body: 'Complete your first transaction today and get AED 50 cashback instantly. Offer valid for 24 hours.',
+    deepLinkUrl: 'paytm://cashback/claim?offer=first50',
+    imageUrl: 'https://placehold.co/400x200/EF4444/FFFFFF?text=Paytm+UAE+Cashback',
   } satisfies PushNotificationContent,
   in_app_banner: {
-    headline: 'Pre-approved Loan — ₹5L at 10.5% p.a.',
-    body: 'Your credit profile qualifies for an instant personal loan. Zero processing fee, disbursal in 2 hours.',
+    headline: 'Pre-approved Loan — up to AED 50,000 @ 6.99% APR',
+    body: 'Your credit profile qualifies for an instant personal loan. Zero processing fee, disbursal within 24 hours.',
     ctaText: 'Check My Offer',
     backgroundColor: '#0EA5E9',
     position: 'bottom',
     expiryHours: 24,
   } satisfies InAppBannerContent,
   facebook_ads: {
-    body: 'Pre-approved personal loan up to ₹5,00,000 — zero processing fee, instant disbursal. Check your Paytm offer now.',
+    body: 'Pre-approved personal loan up to AED 50,000 — zero processing fee, instant disbursal. Check your Paytm UAE offer now.',
   } satisfies SMSContent,
   instagram_ads: {
-    body: 'Your Paytm Gold awaits. Start investing from just ₹1 — secure, simple, anytime. Tap to explore.',
+    body: 'Shop smarter this Ramadan — AED 100 off your first three transactions on Paytm UAE. Tap to explore.',
   } satisfies SMSContent,
 };
 
 const DEFAULT_VOICE_CONFIG: VoiceConfig = {
   script: '',
-  language: 'hinglish',
+  language: 'english',
   voiceGender: 'female',
-  voiceTone: 'friendly',
+  voiceTone: 'professional',
   callWindowStart: '10:00',
   callWindowEnd: '19:00',
   maxRetries: 3,
@@ -424,7 +424,7 @@ function SMSPanel({ content, onContentChange, onSuggestCopy }: SMSPanelProps) {
             <p className="text-xs font-semibold text-warning">Cost alert: Will be sent as 2 SMS units</p>
             <p className="mt-0.5 text-xs text-text-secondary">
               Your message is {charCount} characters. SMS units are 160 chars each — this will double
-              cost from ₹0.25 to ₹0.50/user. Consider trimming to stay under 160 chars.
+              cost from AED 0.25 to AED 0.50/user. Consider trimming to stay under 160 chars.
             </p>
           </div>
         </div>
@@ -861,7 +861,7 @@ function InAppBannerPanel({ content, onContentChange, onSuggestCopy }: InAppBann
             type="text"
             value={content.headline}
             onChange={(e) => onContentChange({ ...content, headline: e.target.value })}
-            placeholder="e.g., Pre-approved Loan — ₹5L at 10.5% p.a."
+            placeholder="e.g., Pre-approved Loan — up to AED 50,000 @ 6.99% APR"
             className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-text-primary placeholder-text-secondary outline-none focus:border-cyan focus:ring-2 focus:ring-cyan/20"
           />
         </div>
@@ -1135,7 +1135,7 @@ function VariantManager({
     : 0;
 
   function fmtUsers(pct: number) {
-    return Math.round((audienceSize * pct) / 100).toLocaleString('en-IN');
+    return Math.round((audienceSize * pct) / 100).toLocaleString('en-AE');
   }
 
   return (

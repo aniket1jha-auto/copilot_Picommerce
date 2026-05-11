@@ -103,7 +103,7 @@ export const CONTENT_IDEAS: ContentIdea[] = [
       openingLine:
         'Namaste [Name] ji, main [Brand] ki taraf se bol raha hoon. Aapki EMI ke baare mein baat karni thi — kya abhi 2 minute ka time hai?',
       firstResponseLine:
-        'Samajh gaya. Aapka outstanding ₹[amount] hai, due date [date] thi. Main aapko restructuring options bata sakta hoon — chhoti EMI par shift karna possible ho sakta hai.',
+        'Samajh gaya. Aapka outstanding AED [amount] hai, due date [date] thi. Main aapko restructuring options bata sakta hoon — chhoti EMI par shift karna possible ho sakta hai.',
     },
     campaign: {
       audience: '30–60 DPD loan accounts',
@@ -181,7 +181,7 @@ export const CONTENT_IDEAS: ContentIdea[] = [
       variant: 'messaging',
       channel: 'whatsapp',
       text:
-        'Hi [Name], this is a reminder that your payment of ₹[amount] is due on [date]. Tap here to pay now: [link]. Reply STOP to opt out.',
+        'Hi [Name], this is a reminder that your payment of AED [amount] is due on [date]. Tap here to pay now: [link]. Reply STOP to opt out.',
     },
     campaign: {
       audience: '30–60 DPD loan accounts',

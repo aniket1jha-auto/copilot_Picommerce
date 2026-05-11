@@ -38,7 +38,7 @@ function SmsPreview() {
   return (
     <div className="px-3 pb-2 pt-3">
       <div className="rounded-md bg-white/10 px-2 py-1.5 text-[10px] leading-snug text-white/90 ring-1 ring-white/10">
-        BRAND: Your payment of ₹12,400 is due tomorrow. Pay: pay.tm/xx
+        BRAND: Your payment of AED 12,400 is due tomorrow. Pay: pay.tm/xx
       </div>
     </div>
   );

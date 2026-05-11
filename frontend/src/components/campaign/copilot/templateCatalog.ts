@@ -1,8 +1,17 @@
 import type { ChannelKey } from './copilotEngine';
 
 /**
- * Mock template catalog used by the Campaign Copilot.
- * Each template has channel + use-case keywords for goal-based matching.
+ * Mock template catalog for the Campaign Copilot — UAE / Arabic-branch
+ * variant.
+ *
+ * Templates mix English and Arabic copy, sized for typical UAE campaigns:
+ *   • banking / consumer finance (credit card, personal loan, EMI)
+ *   • telecom and utilities (DEWA, du, Etisalat-style bill reminders)
+ *   • retail and e-commerce (Ramadan / Eid promos, cashback offers)
+ *   • onboarding / win-back
+ *
+ * Currency is AED. Keep the placeholders ({name}, {amount}, {link}, etc.)
+ * so the agent can stitch them in at send time.
  */
 
 export interface CopilotTemplate {
@@ -17,115 +26,159 @@ export interface CopilotTemplate {
 export const COPILOT_TEMPLATES: CopilotTemplate[] = [
   // ─── WhatsApp ──────────────────────────────────────────────────────────
   {
-    id: 'wa-kyc-reminder',
-    name: 'WhatsApp · KYC Reminder',
+    id: 'wa-emirates-id-reminder',
+    name: 'WhatsApp · Emirates ID Verification',
     channel: 'whatsapp',
     preview:
-      'Hello {name} 👋 Your KYC is pending. Complete it now to unlock higher limits. Tap: {link}',
-    useCases: ['kyc', 'verify', 'onboard'],
+      'Hello {name} 👋 Please verify your Emirates ID to unlock full account features. It only takes 2 minutes — tap here: {link}',
+    useCases: ['kyc', 'verify', 'verification', 'onboard', 'emirates id'],
   },
   {
-    id: 'wa-loan-recovery',
-    name: 'WhatsApp · Loan EMI Reminder',
+    id: 'wa-credit-card-emi-reminder-ar',
+    name: 'WhatsApp · EMI Reminder (Arabic)',
     channel: 'whatsapp',
     preview:
-      'Hi {name}, your EMI of ₹{amount} is due on {date}. Pay now to avoid late fees: {link}',
-    useCases: ['recovery', 'dunning', 'loan', 'emi', 'overdue'],
+      'مرحباً {name}، قسطك الشهري بقيمة AED {amount} مستحق بتاريخ {date}. الرجاء الدفع لتجنب رسوم التأخير: {link}',
+    useCases: ['recovery', 'dunning', 'overdue', 'emi', 'loan', 'credit card'],
   },
   {
-    id: 'wa-festival-promo',
-    name: 'WhatsApp · Festival Cashback',
+    id: 'wa-loan-recovery-en',
+    name: 'WhatsApp · Loan Payment Reminder',
     channel: 'whatsapp',
     preview:
-      'Festival offer 🎁 Get ₹{cashback} cashback on your next transaction. Shop now: {link}',
-    useCases: ['promo', 'cashback', 'festival', 'offer', 'sale'],
+      'Hi {name}, your loan instalment of AED {amount} is due on {date}. Pay now to avoid late charges: {link}',
+    useCases: ['recovery', 'dunning', 'overdue', 'emi', 'loan'],
   },
   {
-    id: 'wa-reactivation',
-    name: 'WhatsApp · Win-back',
+    id: 'wa-eid-cashback',
+    name: 'WhatsApp · Eid Cashback Promo',
     channel: 'whatsapp',
     preview:
-      "We miss you {name}! Here's ₹{offer} to come back. Valid for 7 days: {link}",
+      'Eid Mubarak {name}! 🌙 Get AED {cashback} cashback on your next purchase this Eid. Shop today: {link}',
+    useCases: ['promo', 'cashback', 'eid', 'festival', 'offer', 'sale'],
+  },
+  {
+    id: 'wa-ramadan-promo-ar',
+    name: 'WhatsApp · Ramadan Offer (Arabic)',
+    channel: 'whatsapp',
+    preview:
+      'رمضان كريم {name} 🌙 استمتع بخصم AED {discount} على طلباتك خلال الشهر الفضيل. تسوّق الآن: {link}',
+    useCases: ['promo', 'ramadan', 'festival', 'offer', 'discount'],
+  },
+  {
+    id: 'wa-reactivation-en',
+    name: 'WhatsApp · Win-back Offer',
+    channel: 'whatsapp',
+    preview:
+      "We miss you {name}! Here's AED {offer} on us to come back. Valid for 7 days: {link}",
     useCases: ['reactivat', 'dormant', 'inactive', 'engage', 'winback', 'win-back'],
   },
   {
-    id: 'wa-welcome',
-    name: 'WhatsApp · Welcome Onboarding',
+    id: 'wa-welcome-ar',
+    name: 'WhatsApp · Welcome Onboarding (Arabic)',
     channel: 'whatsapp',
     preview:
-      'Welcome to Paytm Commerce, {name}! Get started in 2 mins: {link}',
+      'أهلاً بك {name} في باي تي إم الإمارات 🎉 ابدأ تجربتك في دقيقتين: {link}',
     useCases: ['welcome', 'onboard', 'signup', 'signed up'],
   },
 
   // ─── SMS ───────────────────────────────────────────────────────────────
   {
-    id: 'sms-kyc',
-    name: 'SMS · KYC Reminder',
+    id: 'sms-emirates-id-en',
+    name: 'SMS · Emirates ID Verify',
     channel: 'sms',
-    preview: 'Dear {name}, complete KYC in 2 mins to unlock limits: {link}',
-    useCases: ['kyc', 'verify', 'onboard'],
+    preview:
+      'Dear {name}, verify your Emirates ID in 2 mins to unlock your account: {link}. Reply STOP to opt out.',
+    useCases: ['kyc', 'verify', 'verification', 'onboard'],
   },
   {
-    id: 'sms-recovery',
-    name: 'SMS · EMI Reminder',
+    id: 'sms-emi-reminder-ar',
+    name: 'SMS · EMI Reminder (Arabic)',
     channel: 'sms',
-    preview: 'Dear {name}, EMI of ₹{amount} due on {date}. Pay: {link}',
-    useCases: ['recovery', 'dunning', 'loan', 'emi', 'overdue'],
+    preview:
+      'عزيزي العميل، قسطك بقيمة AED {amount} مستحق بتاريخ {date}. للدفع: {link}',
+    useCases: ['recovery', 'dunning', 'overdue', 'emi', 'loan'],
   },
   {
-    id: 'sms-promo',
-    name: 'SMS · Promo Offer',
+    id: 'sms-utility-bill-reminder',
+    name: 'SMS · Utility Bill Reminder',
     channel: 'sms',
-    preview: 'Pre-approved cashback ₹{x}! Apply now: {link} T&C apply.',
+    preview:
+      'Your monthly bill of AED {amount} is due on {date}. Pay now to avoid disconnection: {link}',
+    useCases: ['recovery', 'dunning', 'overdue', 'bill', 'utility'],
+  },
+  {
+    id: 'sms-promo-en',
+    name: 'SMS · Cashback Promo',
+    channel: 'sms',
+    preview:
+      'Pre-approved cashback of AED {x}! Apply now: {link}. T&C apply. Reply STOP to opt out.',
     useCases: ['promo', 'cashback', 'offer', 'sale'],
   },
   {
-    id: 'sms-reactivation',
-    name: 'SMS · Win-back',
+    id: 'sms-reactivation-ar',
+    name: 'SMS · Win-back (Arabic)',
     channel: 'sms',
-    preview: 'Come back to Paytm — ₹{x} offer for you: {link}',
+    preview: 'اشتقنا لك {name}! خصم AED {x} ينتظرك — استلمه الآن: {link}',
     useCases: ['reactivat', 'dormant', 'inactive', 'engage', 'winback'],
   },
 
   // ─── RCS ───────────────────────────────────────────────────────────────
   {
-    id: 'rcs-kyc-card',
-    name: 'RCS · KYC Rich Card',
+    id: 'rcs-emirates-id-card',
+    name: 'RCS · Emirates ID Verification Card',
     channel: 'rcs',
-    preview: 'Rich card with KYC steps + "Start now" / "Help" buttons',
+    preview:
+      'Rich card with Emirates ID verification steps + "Start now" / "Need help?" buttons',
     useCases: ['kyc', 'verify', 'onboard'],
   },
   {
-    id: 'rcs-promo-carousel',
-    name: 'RCS · Promo Carousel',
+    id: 'rcs-ramadan-carousel',
+    name: 'RCS · Ramadan Offers Carousel',
     channel: 'rcs',
-    preview: 'Multi-card carousel of cashback offers',
-    useCases: ['promo', 'cashback', 'festival', 'offer'],
+    preview: 'Multi-card carousel of Ramadan offers across grocery, fashion, and travel',
+    useCases: ['promo', 'ramadan', 'eid', 'festival', 'cashback', 'offer'],
+  },
+  {
+    id: 'rcs-loan-offer-card',
+    name: 'RCS · Personal Loan Offer Card',
+    channel: 'rcs',
+    preview:
+      'Rich card: pre-approved loan up to AED {amount} · 0% processing · 24-hour disbursal',
+    useCases: ['loan', 'credit', 'promo', 'offer'],
   },
 
   // ─── AI Voice ──────────────────────────────────────────────────────────
   {
-    id: 'voice-recovery-script',
-    name: 'AI Voice · Recovery Script',
+    id: 'voice-recovery-en',
+    name: 'AI Voice · Recovery Script (English)',
     channel: 'ai_voice',
     preview:
-      "Outbound call: 'Hi {name}, calling about your loan EMI of ₹{amount}. Would you like to pay now or schedule a callback?'",
-    useCases: ['recovery', 'dunning', 'loan', 'emi', 'overdue'],
+      "Outbound call: 'Hello {name}, this is regarding your overdue payment of AED {amount}. Would you like to settle now via the SMS link or schedule a callback?'",
+    useCases: ['recovery', 'dunning', 'overdue', 'emi', 'loan'],
   },
   {
-    id: 'voice-welcome-script',
+    id: 'voice-recovery-ar',
+    name: 'AI Voice · Recovery Script (Arabic)',
+    channel: 'ai_voice',
+    preview:
+      "Outbound call: 'مرحباً {name}، نتواصل معك بخصوص قسطك المتأخر بقيمة AED {amount}. هل ترغب بالدفع الآن أم نحدد موعداً للمتابعة؟'",
+    useCases: ['recovery', 'dunning', 'overdue', 'emi', 'loan'],
+  },
+  {
+    id: 'voice-welcome-en',
     name: 'AI Voice · Welcome Call',
     channel: 'ai_voice',
     preview:
-      "Outbound call: 'Welcome to Paytm Commerce, {name}. May I help you set up your account?'",
+      "Outbound call: 'Welcome to Paytm UAE, {name}. May I help you set up your account in two minutes?'",
     useCases: ['welcome', 'onboard', 'signup'],
   },
   {
-    id: 'voice-reactivation-script',
-    name: 'AI Voice · Reactivation Script',
+    id: 'voice-reactivation-ar',
+    name: 'AI Voice · Reactivation Script (Arabic)',
     channel: 'ai_voice',
     preview:
-      "Outbound call: 'Hi {name}, we noticed you haven't transacted in a while. We have a personalized offer for you.'",
+      "Outbound call: 'مرحباً {name}، لاحظنا أنك لم تستخدم حسابك مؤخراً. لدينا عرض خاص بقيمة AED {offer} ينتظرك.'",
     useCases: ['reactivat', 'dormant', 'inactive', 'engage', 'winback'],
   },
 ];

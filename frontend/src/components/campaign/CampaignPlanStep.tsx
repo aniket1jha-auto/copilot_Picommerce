@@ -467,7 +467,7 @@ function SubCohortDetails({ ss, editable, onTimingChange }: SubCohortDetailsProp
       <DetailField label="Sub-cohort" value={ss.name} />
       <DetailField
         label="Size"
-        value={`${ss.userCount.toLocaleString('en-IN')} · ${ss.percentage}%`}
+        value={`${ss.userCount.toLocaleString('en-AE')} · ${ss.percentage}%`}
       />
       <DetailField
         label="Primary channel"
@@ -917,7 +917,7 @@ function SubSegmentRow({
           <div className="flex items-center gap-3">
             <span className="text-base font-semibold text-text-primary">{ss.name}</span>
             <span className="rounded-full bg-[#F3F4F6] px-2.5 py-0.5 text-xs font-medium text-text-secondary">
-              {ss.userCount.toLocaleString('en-IN')} users · {ss.percentage}%
+              {ss.userCount.toLocaleString('en-AE')} users · {ss.percentage}%
             </span>
             <span className="text-xs font-medium text-text-secondary">
               {formatINR(ss.estimatedCost)}
@@ -1103,7 +1103,7 @@ export function CampaignPlanStep({ campaignData, onUpdate }: CampaignPlanStepPro
   const selectedSegment = segments.find((s) => s.id === campaignData.segmentId);
   const segmentSize = selectedSegment?.size ?? 45000;
   const budgetInput = campaignData.goal.tentativeBudget || '';
-  const tentativeBudget = budgetInput ? parseFloat(budgetInput.replace(/[₹,]/g, '')) * (budgetInput.toLowerCase().includes('l') ? 100000 : budgetInput.toLowerCase().includes('k') ? 1000 : 1) : 0;
+  const tentativeBudget = budgetInput ? parseFloat(budgetInput.replace(/[AEDaed,\s]/g, "")) * (budgetInput.toLowerCase().includes('l') ? 100000 : budgetInput.toLowerCase().includes('k') ? 1000 : 1) : 0;
   const selectedChannels = campaignData.channels;
 
   // Compute once on mount (deterministic)
@@ -1290,7 +1290,7 @@ export function CampaignPlanStep({ campaignData, onUpdate }: CampaignPlanStepPro
             </span>
             <span className="text-[#E5E7EB]">|</span>
             <span className="text-text-secondary">
-              <span className="font-semibold text-text-primary">{totalUsers.toLocaleString('en-IN')}</span> users
+              <span className="font-semibold text-text-primary">{totalUsers.toLocaleString('en-AE')}</span> users
             </span>
             <span className="text-[#E5E7EB]">|</span>
             <span className="font-semibold text-cyan">{formatINR(totalCost)}</span>

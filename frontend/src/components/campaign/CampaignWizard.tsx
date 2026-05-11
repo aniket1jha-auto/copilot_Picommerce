@@ -391,7 +391,7 @@ export function CampaignWizard({ initialData, initialStep }: CampaignWizardProps
       kind: 'success',
       title: `Campaign "${campaign.name}" created`,
       body: scheduledAt
-        ? `Scheduled. ${segmentReachable.toLocaleString('en-IN')} contacts queued.`
+        ? `Scheduled. ${segmentReachable.toLocaleString('en-AE')} contacts queued.`
         : `Saved as draft. Review and launch from the campaign detail.`,
     });
 

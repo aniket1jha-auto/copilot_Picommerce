@@ -90,7 +90,7 @@ export const AI_RECOMMENDATIONS: AIRecommendation[] = [
     title: 'Switch Support Agent to gpt-realtime-mini for 35% cost reduction',
     description:
       'Your Customer Support Agent currently uses gpt-realtime (1.5x cost). Quality benchmarks across the support use case show negligible differences with gpt-realtime-mini on this workload. Switching reduces per-call cost without measurable impact on resolution rate or customer satisfaction.',
-    impact: 'Save ~₹80,000/month at the same 92.5% success rate',
+    impact: 'Save ~AED 80,000/month at the same 92.5% success rate',
     action: '/agents/agent_2',
     actionLabel: 'View Agent',
     confidence: 91,
@@ -103,7 +103,7 @@ export const AI_RECOMMENDATIONS: AIRecommendation[] = [
     title: 'Untapped segment: dormant users with high past LTV',
     description:
       "We identified ~45K users who were high-value 6+ months ago but haven't been targeted in any active campaign. Similar reactivation campaigns on the platform see 3.8% conversion rates. A WhatsApp-first sequence with a personalised welcome-back message would be the natural starting point.",
-    impact: 'Potential 1,710 reactivated users · est. ₹8.5L revenue impact',
+    impact: 'Potential 1,710 reactivated users · est. AED 850,000 revenue impact',
     action: '/campaigns/new',
     actionLabel: 'Start a New Campaign',
     confidence: 82,

@@ -155,7 +155,7 @@ export const testCallScripts: TestCallScript[] = [
       {
         kind: 'agent',
         text:
-          "Theek hai. Aapki EMI of ₹4,250 due hai 15 din se. Aap aaj UPI link se ek tap mein pay kar sakte ho — main bhej doon?",
+          "Theek hai. Aapki EMI of AED 4,250 due hai 15 din se. Aap aaj UPI link se ek tap mein pay kar sakte ho — main bhej doon?",
         latency: { asrMs: 160, llmMs: 320, kbMs: 100, ttsMs: 220 },
         speakingMs: 3600,
         intent: 'state_outstanding',
@@ -256,7 +256,7 @@ export const testCallScripts: TestCallScript[] = [
       {
         kind: 'agent',
         text:
-          "Sure. Min KYC users have a monthly wallet limit of ₹10,000; Full KYC unlocks ₹1 lakh per month. Which one do you have?",
+          "Sure. Min KYC users have a monthly wallet limit of AED 10,000; Full KYC unlocks AED 1 lakh per month. Which one do you have?",
         latency: { asrMs: 180, llmMs: 360, kbMs: 95, ttsMs: 240 },
         speakingMs: 3800,
         intent: 'explain_limits',

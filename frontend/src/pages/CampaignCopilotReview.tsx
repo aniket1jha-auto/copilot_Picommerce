@@ -239,7 +239,7 @@ function CampaignContextStrip({
           label="Audience"
           value={
             audienceName
-              ? `${audienceName} · ${(audienceSize ?? 0).toLocaleString('en-IN')} contacts`
+              ? `${audienceName} · ${(audienceSize ?? 0).toLocaleString('en-AE')} contacts`
               : undefined
           }
         />

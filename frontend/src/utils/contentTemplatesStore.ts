@@ -1,7 +1,9 @@
 import type { ContentTemplateRow } from '@/types/contentLibrary';
 import { MOCK_CONTENT_TEMPLATES } from '@/data/mock/contentLibraryTemplates';
 
-const STORAGE_KEY = 'picommerce.contentTemplates.v1';
+// v2 bumped for the Arabic / UAE rewrite so any cached India-locale
+// templates from the previous schema get superseded automatically.
+const STORAGE_KEY = 'picommerce.contentTemplates.v2';
 
 function safeParseTemplates(raw: string | null): ContentTemplateRow[] | null {
   if (!raw) return null;

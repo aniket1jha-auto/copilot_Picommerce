@@ -4,7 +4,7 @@ export const baseSegments: Segment[] = [
   {
     id: 'seg-001',
     name: 'High LTV Dormant',
-    description: 'Users with LTV > ₹10K who have not transacted in 60+ days',
+    description: 'Users with LTV > AED 10K who have not transacted in 60+ days',
     size: 45000,
     reachability: {
       sms: 43200,       // 96% — have valid phone number

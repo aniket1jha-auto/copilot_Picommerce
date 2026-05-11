@@ -79,7 +79,7 @@ export function ChannelNode({ data, selected }: NodeProps) {
               {performance.conversionRate.toFixed(1)}% CVR
             </span>
             <span className="text-xs text-gray-400">
-              ₹{performance.cost.toLocaleString('en-IN')}
+              AED {performance.cost.toLocaleString('en-AE')}
             </span>
           </div>
         )}

@@ -157,7 +157,7 @@ export const mockKnowledgeBaseChunks: KBChunk[] = [
     'kbchunk-00001', 'kb-003', 'kbdoc-00201', 'Paytm KYC FAQ.pdf', 'p. 3', 110,
     'Min KYC can be completed using Aadhaar OTP. Provide your Aadhaar number on the app, ' +
       'receive a 6-digit OTP on your registered mobile, and verify within 10 minutes. ' +
-      'Min KYC unlocks the wallet for monthly transaction limits up to ₹10,000.',
+      'Min KYC unlocks the wallet for monthly transaction limits up to AED 10,000.',
   ),
   chunk(
     'kbchunk-00002', 'kb-003', 'kbdoc-00201', 'Paytm KYC FAQ.pdf', 'p. 5', 96,
@@ -172,7 +172,7 @@ export const mockKnowledgeBaseChunks: KBChunk[] = [
   ),
   chunk(
     'kbchunk-00004', 'kb-003', 'kbdoc-00204', 'Min vs Full KYC — feature matrix.csv', 'row 2', 42,
-    'Min KYC: Wallet ₹10K/month limit, no fund transfer. Full KYC: ₹1L/month wallet, fund ' +
+    'Min KYC: Wallet AED 10K/month limit, no fund transfer. Full KYC: AED 1L/month wallet, fund ' +
       'transfer, merchant payments, savings account eligibility.',
   ),
   chunk(
@@ -183,8 +183,8 @@ export const mockKnowledgeBaseChunks: KBChunk[] = [
   // Wallet & UPI Policy
   chunk(
     'kbchunk-00101', 'kb-002', 'kbdoc-00101', 'Paytm Wallet & UPI Policy.pdf', 'p. 4', 88,
-    'Wallet limits by tier: Min KYC — ₹10,000 monthly. Full KYC — ₹1,00,000 monthly. ' +
-      'UPI limits follow NPCI guidelines — ₹1L per transaction subject to receiving bank.',
+    'Wallet limits by tier: Min KYC — AED 10,000 monthly. Full KYC — AED 1,00,000 monthly. ' +
+      'UPI limits follow NPCI guidelines — AED 1L per transaction subject to receiving bank.',
   ),
   chunk(
     'kbchunk-00102', 'kb-002', 'kbdoc-00101', 'Paytm Wallet & UPI Policy.pdf', 'p. 6', 102,
@@ -204,7 +204,7 @@ export const mockKnowledgeBaseChunks: KBChunk[] = [
   chunk(
     'kbchunk-00202', 'kb-001', 'kbdoc-00004', 'Postpaid — eligibility & repayment.pdf', 'p. 2', 84,
     'Postpaid eligibility: Full KYC, age 21+, credit score above 650 (CIBIL or Experian). ' +
-      'Initial limit ₹20,000. Repayment due on the 15th of every month.',
+      'Initial limit AED 20,000. Repayment due on the 15th of every month.',
   ),
   // Loan Recovery Playbook
   chunk(

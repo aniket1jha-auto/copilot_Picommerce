@@ -323,15 +323,15 @@ const INITIAL_PENDING_INSIGHTS: PendingInsight[] = [
     title: 'Pause underperforming sub-segment',
     description: "SMS Only — No App sub-segment has 1.5% conversion (60% below campaign average)",
     recommendation: 'Pause SMS outreach for this sub-segment and reallocate budget to AI Voice, which shows 7.2% conversion for similar profiles',
-    estimatedImpact: 'Save ~₹8,400 in SMS costs, potentially convert 40+ additional users via AI Voice',
+    estimatedImpact: 'Save ~AED 8,400 in SMS costs, potentially convert 40+ additional users via AI Voice',
     risk: 'low',
     status: 'pending',
   },
   {
     id: 'pending-2',
     title: 'Add field executive for high-value non-converters',
-    description: '412 high-value users (LTV > ₹15K) have not converted after 3 channel touchpoints',
-    recommendation: 'Create field executive tasks for these users — they represent ₹61.8L in potential LTV',
+    description: '412 high-value users (LTV > AED 15K) have not converted after 3 channel touchpoints',
+    recommendation: 'Create field executive tasks for these users — they represent AED 61.8L in potential LTV',
     estimatedImpact: 'Based on field exec completion rate of 22%, expect ~90 additional conversions',
     risk: 'medium',
     status: 'pending',
@@ -504,7 +504,7 @@ export function CampaignDetail() {
 
   const launchDate = (campaign as unknown as { launchedAt?: string }).launchedAt
     ?? campaign.createdAt;
-  const launchFormatted = new Date(launchDate).toLocaleDateString('en-IN', {
+  const launchFormatted = new Date(launchDate).toLocaleDateString('en-AE', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -998,9 +998,9 @@ export function CampaignDetail() {
             <div className="rounded-lg bg-white p-4 ring-1 ring-[#E5E7EB]">
               <p className="mb-2 text-xs font-medium text-text-secondary">Cost per Conversion</p>
               <div className="flex items-end gap-2">
-                <span className="text-xs text-text-secondary line-through">₹182</span>
+                <span className="text-xs text-text-secondary line-through">AED 182</span>
                 <span className="text-[#27AE60]">→</span>
-                <span className="text-xl font-bold text-[#27AE60]">₹118</span>
+                <span className="text-xl font-bold text-[#27AE60]">AED 118</span>
               </div>
               <div className="mt-2 flex items-center gap-1">
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#E5E7EB]">
@@ -1021,8 +1021,8 @@ export function CampaignDetail() {
             <div className="rounded-lg bg-white p-4 ring-1 ring-[#E5E7EB]">
               <p className="mb-2 text-xs font-medium text-text-secondary">Campaign Cost vs Budget</p>
               <div className="flex items-end gap-2">
-                <span className="text-xl font-bold text-text-primary">₹3.06L</span>
-                <span className="text-xs text-text-secondary">of ₹5L budget</span>
+                <span className="text-xl font-bold text-text-primary">AED 3.06L</span>
+                <span className="text-xs text-text-secondary">of AED 5L budget</span>
               </div>
               <div className="mt-2 flex items-center gap-1">
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#E5E7EB]">
@@ -1037,7 +1037,7 @@ export function CampaignDetail() {
                   61%
                 </span>
               </div>
-              <p className="mt-1.5 text-[10px] text-[#27AE60] font-medium">Within budget — ₹1.94L remaining</p>
+              <p className="mt-1.5 text-[10px] text-[#27AE60] font-medium">Within budget — AED 1.94L remaining</p>
             </div>
           </div>
 

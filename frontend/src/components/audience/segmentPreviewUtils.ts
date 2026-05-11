@@ -41,7 +41,7 @@ export const SAMPLE_PREVIEW_CONTACTS = [
 export const AI_WHY_BULLETS = [
   'DPD trend: contacts whose DPD increased in the last 30 days',
   'Prior engagement: responded to at least 1 WhatsApp message in 60 days',
-  'Amount threshold: outstanding principal above ₹5,000',
+  'Amount threshold: outstanding principal above AED 5,000',
 ];
 
 export function defaultAiFilterState(): FilterState {

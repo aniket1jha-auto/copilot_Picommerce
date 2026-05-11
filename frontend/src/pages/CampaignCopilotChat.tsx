@@ -423,7 +423,7 @@ function PreviewPanel({
             label="Audience"
             value={
               state.segmentName
-                ? `${state.segmentName} · ${(state.segmentSize ?? 0).toLocaleString('en-IN')} contacts`
+                ? `${state.segmentName} · ${(state.segmentSize ?? 0).toLocaleString('en-AE')} contacts`
                 : undefined
             }
             active={state.focus === 'audience'}

@@ -123,7 +123,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         trigger: 'Campaign launch',
         content: {
           kind: 'whatsapp',
-          text: 'Namaste {{first_name}} 🙏\n\nAapka KYC abhi bhi incomplete hai. Aaj complete karein aur paayein ₹500 cashback + pre-approved ₹2L personal loan offer.\n\nOffer sirf 48 ghante valid hai.',
+          text: 'Namaste {{first_name}} 🙏\n\nAapka KYC abhi bhi incomplete hai. Aaj complete karein aur paayein AED 500 cashback + pre-approved AED 2L personal loan offer.\n\nOffer sirf 48 ghante valid hai.',
           ctaLabel: 'KYC Abhi Complete Karein →',
           hasImage: true,
         },
@@ -135,7 +135,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         content: {
           kind: 'ai_voice',
           scriptSummary:
-            'Personalised call: greet by name, mention ₹2L pre-approved loan, reference their account activity. Ask if they have 2 minutes to complete KYC via app. Offer to send a direct deep-link SMS immediately.',
+            'Personalised call: greet by name, mention AED 2L pre-approved loan, reference their account activity. Ask if they have 2 minutes to complete KYC via app. Offer to send a direct deep-link SMS immediately.',
           language: 'Hindi / English (code-switch)',
         },
       },
@@ -163,7 +163,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         trigger: 'Campaign launch (morning batch)',
         content: {
           kind: 'whatsapp',
-          text: 'Good morning {{first_name}} ☀️\n\nStart your day right — your KYC is just 3 minutes away. Complete it before 12 PM today and unlock ₹250 instant cashback.\n\nCheck → https://app.lnk/kyc',
+          text: 'Good morning {{first_name}} ☀️\n\nStart your day right — your KYC is just 3 minutes away. Complete it before 12 PM today and unlock AED 250 instant cashback.\n\nCheck → https://app.lnk/kyc',
           ctaLabel: 'Complete KYC →',
           hasImage: false,
         },
@@ -175,7 +175,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         content: {
           kind: 'push_notification',
           title: '⏳ KYC pending — cashback waiting!',
-          body: 'Your ₹250 cashback is still unclaimed. Tap to complete KYC in 3 mins.',
+          body: 'Your AED 250 cashback is still unclaimed. Tap to complete KYC in 3 mins.',
         },
       },
       {
@@ -184,7 +184,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         trigger: 'KYC still not initiated',
         content: {
           kind: 'sms',
-          text: 'Dear {{first_name}}, KYC pend hai. Abhi complete karein: https://app.lnk/kyc. ₹250 cashback milega. -FintechApp',
+          text: 'Dear {{first_name}}, KYC pend hai. Abhi complete karein: https://app.lnk/kyc. AED 250 cashback milega. -FintechApp',
         },
       },
     ],
@@ -200,7 +200,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         trigger: 'Campaign launch (evening batch)',
         content: {
           kind: 'sms',
-          text: 'Namaste {{first_name}}, aapka KYC baaki hai. Aaj shaam 9 baje tak complete karein aur paayein ₹200 cashback. Link: https://app.lnk/kyc -FintechApp',
+          text: 'Namaste {{first_name}}, aapka KYC baaki hai. Aaj shaam 9 baje tak complete karein aur paayein AED 200 cashback. Link: https://app.lnk/kyc -FintechApp',
         },
       },
       {
@@ -221,7 +221,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         content: {
           kind: 'ai_voice',
           scriptSummary:
-            'Local language (Hindi/Marathi/Telugu based on profile). Acknowledge they may be busy in evening. Mention that a friend referral bonus of ₹100 has also been added. Ask if they can try once tonight.',
+            'Local language (Hindi/Marathi/Telugu based on profile). Acknowledge they may be busy in evening. Mention that a friend referral bonus of AED 100 has also been added. Ask if they can try once tonight.',
           language: 'Hindi / Regional (profile-matched)',
         },
       },
@@ -238,7 +238,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         trigger: 'Campaign launch (SMS-only segment)',
         content: {
           kind: 'sms',
-          text: 'FintechApp: {{first_name}}, KYC karo aur ₹150 pao. Call 1800-XXX-XXXX ya link: https://app.lnk/k -FintechApp STOP 1909',
+          text: 'FintechApp: {{first_name}}, KYC karo aur AED 150 pao. Call 1800-XXX-XXXX ya link: https://app.lnk/k -FintechApp STOP 1909',
         },
       },
       {
@@ -247,7 +247,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         trigger: 'No response to Day 0 SMS',
         content: {
           kind: 'sms',
-          text: 'Last reminder: KYC deadline aaj raat. ₹150 cashback expire ho jayega. Link: https://app.lnk/k -FintechApp STOP 1909',
+          text: 'Last reminder: KYC deadline aaj raat. AED 150 cashback expire ho jayega. Link: https://app.lnk/k -FintechApp STOP 1909',
         },
       },
       {
@@ -274,7 +274,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         trigger: 'Campaign launch (triggers on app open)',
         content: {
           kind: 'in_app_banner',
-          headline: 'Complete KYC → Unlock ₹5L Credit Line',
+          headline: 'Complete KYC → Unlock AED 5L Credit Line',
           cta: 'Start in 3 mins',
           bgColor: '#002970',
         },
@@ -286,7 +286,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         content: {
           kind: 'push_notification',
           title: '🔓 Unlock your credit line today',
-          body: '{{first_name}}, you\'re one step away from a ₹5L credit limit. Complete KYC now.',
+          body: '{{first_name}}, you\'re one step away from a AED 5L credit limit. Complete KYC now.',
         },
       },
       {
@@ -295,7 +295,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         trigger: 'No KYC initiated after banner + push',
         content: {
           kind: 'whatsapp',
-          text: 'Hi {{first_name}} 👋\n\nNoticed you\'ve been actively using the app but KYC is still pending. That\'s the only thing between you and a ₹5L credit line.\n\nTakes 3 minutes — try it right now.',
+          text: 'Hi {{first_name}} 👋\n\nNoticed you\'ve been actively using the app but KYC is still pending. That\'s the only thing between you and a AED 5L credit line.\n\nTakes 3 minutes — try it right now.',
           ctaLabel: 'Unlock Credit Line →',
           hasImage: false,
         },
@@ -313,7 +313,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         trigger: 'Campaign launch (RCS-capable devices)',
         content: {
           kind: 'rcs',
-          text: 'Namaste {{first_name}} 🎉 Aapka account almost ready hai — bas KYC baaki hai. Complete karein aur paayein ₹300 cashback + ₹2L pre-approved loan.',
+          text: 'Namaste {{first_name}} 🎉 Aapka account almost ready hai — bas KYC baaki hai. Complete karein aur paayein AED 300 cashback + AED 2L pre-approved loan.',
           buttons: ['KYC Abhi Karein', 'Baad Mein Yaad Dilaayein', 'Helpline'],
         },
       },
@@ -323,7 +323,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         trigger: 'RCS delivered but no button tap',
         content: {
           kind: 'whatsapp',
-          text: 'Hey {{first_name}} 👋\n\nWe sent you a message a few days ago about your KYC. Still pending! Complete it today — ₹300 cashback + loan access waiting.',
+          text: 'Hey {{first_name}} 👋\n\nWe sent you a message a few days ago about your KYC. Still pending! Complete it today — AED 300 cashback + loan access waiting.',
           ctaLabel: 'Complete KYC →',
           hasImage: true,
         },
@@ -334,7 +334,7 @@ const SUB_SEGMENTS: SubSegment[] = [
         trigger: 'No KYC after RCS + WhatsApp',
         content: {
           kind: 'sms',
-          text: 'Final reminder {{first_name}}: KYC puri karein aur ₹300 cashback paayein. Link: https://app.lnk/kyc -FintechApp STOP 1909',
+          text: 'Final reminder {{first_name}}: KYC puri karein aur AED 300 cashback paayein. Link: https://app.lnk/kyc -FintechApp STOP 1909',
         },
       },
     ],

@@ -363,7 +363,7 @@ function getChannelRecommendation(
     const pctOfBudget = Math.round((totalChannelCost / tentativeBudget) * 100);
     return {
       status: 'not_recommended',
-      reason: `High cost — ${formatINR(totalChannelCost)} would consume ~${pctOfBudget}% of your ₹${(tentativeBudget / 100000).toFixed(1)}L budget`,
+      reason: `High cost — ${formatINR(totalChannelCost)} would consume ~${pctOfBudget}% of your ${formatINR(tentativeBudget)} budget`,
     };
   }
 
@@ -379,7 +379,7 @@ function getChannelRecommendation(
   if (reachPercent > 60) {
     return {
       status: 'recommended',
-      reason: `High reachability — ${reachPercent.toFixed(0)}% of your segment (${reachCount.toLocaleString('en-IN')} users) can be reached`,
+      reason: `High reachability — ${reachPercent.toFixed(0)}% of your segment (${reachCount.toLocaleString('en-AE')} users) can be reached`,
     };
   }
 
@@ -394,7 +394,7 @@ function getChannelRecommendation(
   // Default
   return {
     status: 'consider',
-    reason: `Reaches ${reachPercent.toFixed(0)}% of your segment (${reachCount.toLocaleString('en-IN')} users). Consider pairing with higher-reach channels`,
+    reason: `Reaches ${reachPercent.toFixed(0)}% of your segment (${reachCount.toLocaleString('en-AE')} users). Consider pairing with higher-reach channels`,
   };
 }
 
@@ -529,7 +529,7 @@ function ChannelRow({
       <span className="mx-1.5 text-[#D1D5DB]">·</span>
       {reachCount !== null && reachPercent !== null ? (
         <>
-          <span>{reachCount.toLocaleString('en-IN')} reachable</span>
+          <span>{reachCount.toLocaleString('en-AE')} reachable</span>
           <span className="mx-1.5 text-[#D1D5DB]">·</span>
           <span>{reachPercent.toFixed(0)}% reach</span>
         </>
@@ -883,7 +883,7 @@ export function ContentScheduleStep({ campaignData, onUpdate, view = 'all' }: Co
       : segmentSize <= 0
         ? 'Set your audience to see estimate'
         : smartEstimatedCost !== null
-          ? `₹${smartEstimatedCost.toFixed(2)}`
+          ? `AED ${smartEstimatedCost.toFixed(2)}`
           : '—';
 
   // Plan generation — used by both the explicit button (legacy 'all' view)
@@ -899,7 +899,7 @@ export function ContentScheduleStep({ campaignData, onUpdate, view = 'all' }: Co
     }
     const budgetInput = campaignData.goal.tentativeBudget || '';
     const tentativeBudgetParsed = budgetInput
-      ? parseFloat(budgetInput.replace(/[₹,]/g, '')) *
+      ? parseFloat(budgetInput.replace(/[AEDaed,\s]/g, "")) *
         (budgetInput.toLowerCase().includes('l')
           ? 100000
           : budgetInput.toLowerCase().includes('k')
@@ -1607,7 +1607,7 @@ export function ContentScheduleStep({ campaignData, onUpdate, view = 'all' }: Co
             </div>
             <div className="flex justify-between gap-2">
               <dt className="text-text-secondary">Audience size</dt>
-              <dd className="font-medium text-text-primary">{segmentSize > 0 ? `${segmentSize.toLocaleString('en-IN')} users` : '—'}</dd>
+              <dd className="font-medium text-text-primary">{segmentSize > 0 ? `${segmentSize.toLocaleString('en-AE')} users` : '—'}</dd>
             </div>
             <div className="flex justify-between gap-2">
               <dt className="text-text-secondary">Est. total cost</dt>
@@ -1716,7 +1716,7 @@ export function ContentScheduleStep({ campaignData, onUpdate, view = 'all' }: Co
               <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 py-3">
                 <p className="text-xs font-semibold text-text-primary">Constraints &amp; budget</p>
                 <div className="text-xs font-semibold text-text-primary">
-                  {(parseFloat(campaignData.goal.tentativeBudget) || 0).toLocaleString('en-IN')}
+                  {(parseFloat(campaignData.goal.tentativeBudget) || 0).toLocaleString('en-AE')}
                 </div>
               </div>
               <div className="px-4 py-4">
@@ -1833,7 +1833,7 @@ export function ContentScheduleStep({ campaignData, onUpdate, view = 'all' }: Co
             <div className="mt-3 grid grid-cols-3 gap-3">
               <div className="rounded-md border border-amber-200 bg-white px-3 py-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">Segment size</p>
-                <p className="mt-0.5 text-sm font-semibold text-text-primary">{segmentSize.toLocaleString('en-IN')}</p>
+                <p className="mt-0.5 text-sm font-semibold text-text-primary">{segmentSize.toLocaleString('en-AE')}</p>
               </div>
               <div className="rounded-md border border-amber-200 bg-white px-3 py-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">Priority channels</p>
@@ -1842,7 +1842,7 @@ export function ContentScheduleStep({ campaignData, onUpdate, view = 'all' }: Co
               <div className="rounded-md border border-amber-200 bg-white px-3 py-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">Est. cost</p>
                 <p className="mt-0.5 text-sm font-semibold text-text-primary">
-                  {smartEstimatedCost != null ? `₹${smartEstimatedCost.toFixed(0)}` : '—'}
+                  {smartEstimatedCost != null ? `AED ${smartEstimatedCost.toFixed(0)}` : '—'}
                 </p>
               </div>
             </div>
@@ -1889,7 +1889,7 @@ export function ContentScheduleStep({ campaignData, onUpdate, view = 'all' }: Co
 
               const budgetInput = campaignData.goal.tentativeBudget || '';
               const tentativeBudgetParsed = budgetInput
-                ? parseFloat(budgetInput.replace(/[₹,]/g, '')) *
+                ? parseFloat(budgetInput.replace(/[AEDaed,\s]/g, "")) *
                   (budgetInput.toLowerCase().includes('l')
                     ? 100000
                     : budgetInput.toLowerCase().includes('k')
@@ -1943,7 +1943,7 @@ export function ContentScheduleStep({ campaignData, onUpdate, view = 'all' }: Co
                     {smartPlanSubSegments.length} sub-segments
                   </p>
                   <p className="text-[11px] font-semibold text-text-primary">
-                    {segmentSize > 0 ? `${segmentSize.toLocaleString('en-IN')} users` : '—'}
+                    {segmentSize > 0 ? `${segmentSize.toLocaleString('en-AE')} users` : '—'}
                   </p>
                 </div>
               </div>
@@ -2638,9 +2638,9 @@ function SmartPlanSubSegmentRow({
         </div>
         <div className="shrink-0 text-right">
           <p className="text-xs font-semibold text-text-primary">
-            {userCount.toLocaleString('en-IN')} users · {percentage ? `${percentage}%` : '—'}
+            {userCount.toLocaleString('en-AE')} users · {percentage ? `${percentage}%` : '—'}
           </p>
-          <p className="mt-0.5 text-xs text-text-secondary">₹{estimatedCost.toFixed(0)}</p>
+          <p className="mt-0.5 text-xs text-text-secondary">AED {estimatedCost.toFixed(0)}</p>
         </div>
       </button>
 
@@ -2683,7 +2683,7 @@ function SmartPlanSubSegmentRow({
             <SmartPlanDetail label="Sub-cohort" value={name} />
             <SmartPlanDetail
               label="Size"
-              value={`${userCount.toLocaleString('en-IN')} · ${percentage ? `${percentage}%` : '—'}`}
+              value={`${userCount.toLocaleString('en-AE')} · ${percentage ? `${percentage}%` : '—'}`}
             />
             <SmartPlanDetail
               label="Primary channel"

@@ -1,37 +1,31 @@
 /**
- * Format a number as Indian Rupees with compact notation.
- * Examples: 4200 → "₹4.2K", 420000 → "₹4.2L", 12000000 → "₹1.2Cr"
+ * Format a number as UAE Dirham with compact notation.
+ * Examples: 4200 → "AED 4.2K", 420000 → "AED 420K", 12000000 → "AED 12M"
+ * (Arabic-branch variant — function name kept as `formatINR` for diff
+ * compactness with the India branch; output is AED.)
  */
 export function formatINR(value: number): string {
   if (value < 0) return `-${formatINR(-value)}`;
-  if (value >= 1_00_00_000) {
-    const cr = value / 1_00_00_000;
-    return `₹${stripTrailingZero(cr.toFixed(1))}Cr`;
-  }
-  if (value >= 1_00_000) {
-    const lakh = value / 1_00_000;
-    return `₹${stripTrailingZero(lakh.toFixed(1))}L`;
+  if (value >= 1_000_000) {
+    const m = value / 1_000_000;
+    return `AED ${stripTrailingZero(m.toFixed(1))}M`;
   }
   if (value >= 1_000) {
     const k = value / 1_000;
-    return `₹${stripTrailingZero(k.toFixed(1))}K`;
+    return `AED ${stripTrailingZero(k.toFixed(1))}K`;
   }
-  return `₹${Math.round(value)}`;
+  return `AED ${Math.round(value)}`;
 }
 
 /**
- * Format a count with Indian compact notation.
- * Examples: 1240000 → "12.4L", 45000 → "45K", 24000000 → "2.4Cr"
+ * Format a count with compact notation (no currency).
+ * Examples: 1240000 → "1.2M", 45000 → "45K"
  */
 export function formatCount(value: number): string {
   if (value < 0) return `-${formatCount(-value)}`;
-  if (value >= 1_00_00_000) {
-    const cr = value / 1_00_00_000;
-    return `${stripTrailingZero(cr.toFixed(1))}Cr`;
-  }
-  if (value >= 1_00_000) {
-    const lakh = value / 1_00_000;
-    return `${stripTrailingZero(lakh.toFixed(1))}L`;
+  if (value >= 1_000_000) {
+    const m = value / 1_000_000;
+    return `${stripTrailingZero(m.toFixed(1))}M`;
   }
   if (value >= 1_000) {
     const k = value / 1_000;
@@ -68,11 +62,10 @@ function stripTrailingZero(str: string): string {
 
 /**
  * Per-channel cost label for cost estimation rows.
- * Voice → "₹X.XX/call", field exec → "₹X/task", everything else → "₹X.XX/msg".
- * Consolidated from three local duplicates in campaign components.
+ * Voice → "AED X.XX/call", field exec → "AED X/task", else → "AED X.XX/msg".
  */
 export function formatChannelCost(channelId: string, unitCost: number): string {
-  if (channelId === 'ai_voice') return `₹${unitCost.toFixed(2)}/call`;
-  if (channelId === 'field_executive') return `₹${unitCost.toFixed(0)}/task`;
-  return `₹${unitCost.toFixed(2)}/msg`;
+  if (channelId === 'ai_voice') return `AED ${unitCost.toFixed(2)}/call`;
+  if (channelId === 'field_executive') return `AED ${unitCost.toFixed(0)}/task`;
+  return `AED ${unitCost.toFixed(2)}/msg`;
 }

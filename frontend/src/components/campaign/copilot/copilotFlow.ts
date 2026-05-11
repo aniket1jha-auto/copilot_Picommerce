@@ -257,7 +257,7 @@ function focusPrompt(state: BuildingState, ctx: FlowContext): { text: string; su
     const rec = recommendSegment(state.goalDescription ?? '', ctx.segments);
     if (rec) {
       return {
-        text: `Now let's pick the audience. Based on the goal, **${rec.name}** (${rec.size.toLocaleString('en-IN')} contacts) is a strong fit. Want that, or browse others?`,
+        text: `Now let's pick the audience. Based on the goal, **${rec.name}** (${rec.size.toLocaleString('en-AE')} contacts) is a strong fit. Want that, or browse others?`,
         suggestions: [`Use ${rec.name}`, 'Show me my audiences'],
       };
     }
@@ -312,7 +312,7 @@ function reviewSummary(state: BuildingState): string {
   lines.push(
     `• **Audience:** ${
       state.segmentName
-        ? `${state.segmentName} (${(state.segmentSize ?? 0).toLocaleString('en-IN')} contacts)`
+        ? `${state.segmentName} (${(state.segmentSize ?? 0).toLocaleString('en-AE')} contacts)`
         : '_unset_'
     }`,
   );
@@ -381,7 +381,7 @@ export function processBuilding(
     }
     const top = ctx.segments.slice(0, 6);
     const list = top.map(
-      (s) => `• **${s.name}** — ${s.size.toLocaleString('en-IN')} contacts`,
+      (s) => `• **${s.name}** — ${s.size.toLocaleString('en-AE')} contacts`,
     );
     return {
       text: `Available audiences:\n\n${list.join('\n')}\n\nWhich one?`,

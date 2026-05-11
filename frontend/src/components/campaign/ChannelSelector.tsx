@@ -122,7 +122,7 @@ export function ChannelSelector({ selectedChannels, onUpdate, segmentSize, segme
               {reachCount !== null && (
                 <div className="flex flex-col items-center gap-0.5">
                   <span className="text-xs font-medium text-text-primary">
-                    {reachCount.toLocaleString('en-IN')}
+                    {reachCount.toLocaleString('en-AE')}
                   </span>
                   <span className="text-[10px] text-text-secondary">
                     {segReach !== undefined ? 'reachable' : '~reachable'}
@@ -161,7 +161,7 @@ export function ChannelSelector({ selectedChannels, onUpdate, segmentSize, segme
                     <ChannelIcon channel={ch.id} size={14} />
                     <span className="text-sm text-text-primary">{ch.name}</span>
                     <span className="text-xs text-text-secondary">
-                      {formatChannelCost(ch.id, ch.unitCost)} × {segmentSize.toLocaleString('en-IN')}
+                      {formatChannelCost(ch.id, ch.unitCost)} × {segmentSize.toLocaleString('en-AE')}
                     </span>
                   </div>
                   <span className="text-sm font-semibold text-text-primary">

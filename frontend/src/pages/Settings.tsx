@@ -137,14 +137,14 @@ const CHANNEL_TEMPLATES: Record<string, ChannelTemplate[]> = {
       id: 'sms-loan-offer',
       name: 'Pre-Approved Loan Offer',
       content:
-        'Congratulations {name}! You are pre-approved for a personal loan up to ₹{amount} at {rate}% p.a. No paperwork. Apply now: {link} T&C apply.',
+        'Congratulations {name}! You are pre-approved for a personal loan up to AED {amount} at {rate}% p.a. No paperwork. Apply now: {link} T&C apply.',
       meta: '1 SMS unit · 155 chars',
     },
     {
       id: 'sms-payment-reminder',
       name: 'Payment Reminder',
       content:
-        'Dear {name}, your EMI of ₹{amount} is due on {date}. Pay now via Paytm to avoid late fees: {link} Helpline: 0120-4456-456',
+        'Dear {name}, your EMI of AED {amount} is due on {date}. Pay now via Paytm to avoid late fees: {link} Helpline: 0120-4456-456',
       meta: '1 SMS unit · 138 chars',
     },
   ],
@@ -160,14 +160,14 @@ const CHANNEL_TEMPLATES: Record<string, ChannelTemplate[]> = {
       id: 'wa-festive-offer',
       name: 'Festive Cashback Offer',
       content:
-        '🎉 *Diwali Offer for you, {name}!*\n\nGet *₹{cashback} cashback* on your next transaction of ₹{min_amount}+. Valid till {end_date}.\n\nUse code: *{promo_code}*',
+        '🎉 *Diwali Offer for you, {name}!*\n\nGet *AED {cashback} cashback* on your next transaction of AED {min_amount}+. Valid till {end_date}.\n\nUse code: *{promo_code}*',
       meta: 'Rich text · CTA button: "Avail Offer"',
     },
     {
       id: 'wa-account-activation',
       name: 'Account Activation',
       content:
-        'Hi {name}, your Paytm account is almost ready! 🚀\n\nComplete 2 simple steps:\n1️⃣ Verify your mobile number\n2️⃣ Complete mini-KYC\n\nUnlock ₹500 welcome bonus on activation.',
+        'Hi {name}, your Paytm account is almost ready! 🚀\n\nComplete 2 simple steps:\n1️⃣ Verify your mobile number\n2️⃣ Complete mini-KYC\n\nUnlock AED 500 welcome bonus on activation.',
       meta: 'Rich text · CTA button: "Activate Now"',
     },
   ],
@@ -176,7 +176,7 @@ const CHANNEL_TEMPLATES: Record<string, ChannelTemplate[]> = {
       id: 'rcs-rich-loan-card',
       name: 'Loan Offer Rich Card',
       content:
-        '[Image: Paytm Loan Banner] Pre-approved Personal Loan — ₹{amount} at {rate}% p.a. • Instant disbursal • No collateral required • 100% digital process',
+        '[Image: Paytm Loan Banner] Pre-approved Personal Loan — AED {amount} at {rate}% p.a. • Instant disbursal • No collateral required • 100% digital process',
       meta: 'Rich card · Buttons: "Apply Now", "Know More"',
     },
     {
@@ -190,7 +190,7 @@ const CHANNEL_TEMPLATES: Record<string, ChannelTemplate[]> = {
       id: 'rcs-cashback-carousel',
       name: 'Cashback Carousel',
       content:
-        '[Carousel] Slide 1: ₹50 cashback on first UPI payment. Slide 2: 5% back on Paytm Mall. Slide 3: Free movie tickets on weekend recharge.',
+        '[Carousel] Slide 1: AED 50 cashback on first UPI payment. Slide 2: 5% back on Paytm Mall. Slide 3: Free movie tickets on weekend recharge.',
       meta: 'Carousel · 3 cards · Auto-play',
     },
   ],
@@ -199,21 +199,21 @@ const CHANNEL_TEMPLATES: Record<string, ChannelTemplate[]> = {
       id: 'voice-kyc-verification',
       name: 'KYC Verification Call',
       content:
-        'Hello, am I speaking with {name}? This is a call from Paytm regarding your pending KYC verification. Your account has a spending limit of ₹10,000 until KYC is completed. I can help you complete it right now over this call. Would you like to proceed?',
+        'Hello, am I speaking with {name}? This is a call from Paytm regarding your pending KYC verification. Your account has a spending limit of AED 10,000 until KYC is completed. I can help you complete it right now over this call. Would you like to proceed?',
       meta: 'Language: Hindi/English · Avg duration: 90 sec',
     },
     {
       id: 'voice-collection-reminder',
       name: 'Collection Reminder',
       content:
-        'Hello {name}, this is an automated reminder from Paytm. Your EMI payment of ₹{amount} was due on {due_date}. To avoid any penalty charges, please make the payment today. Press 1 to pay now or press 2 to speak with our executive.',
+        'Hello {name}, this is an automated reminder from Paytm. Your EMI payment of AED {amount} was due on {due_date}. To avoid any penalty charges, please make the payment today. Press 1 to pay now or press 2 to speak with our executive.',
       meta: 'DTMF: 1=Pay, 2=Transfer to agent · Avg duration: 45 sec',
     },
     {
       id: 'voice-product-pitch',
       name: 'Product Pitch — Personal Loan',
       content:
-        'Hi {name}, great news! Based on your excellent Paytm usage, you have a pre-approved personal loan offer of up to ₹{amount}. The interest rate is just {rate}% per annum with flexible EMIs. This offer is valid only till {expiry}. Are you interested in knowing more details?',
+        'Hi {name}, great news! Based on your excellent Paytm usage, you have a pre-approved personal loan offer of up to AED {amount}. The interest rate is just {rate}% per annum with flexible EMIs. This offer is valid only till {expiry}. Are you interested in knowing more details?',
       meta: 'Sentiment detection enabled · Warm transfer on positive response',
     },
   ],
@@ -245,7 +245,7 @@ const CHANNEL_TEMPLATES: Record<string, ChannelTemplate[]> = {
       id: 'push-loan-alert',
       name: 'Loan Offer Alert',
       content:
-        '💰 {name}, you have a pre-approved loan! Get up to ₹{amount} instantly. No paperwork required. Tap to apply now.',
+        '💰 {name}, you have a pre-approved loan! Get up to AED {amount} instantly. No paperwork required. Tap to apply now.',
       meta: 'Push · Title + body · Deep link: /loans/apply',
     },
     {
@@ -259,7 +259,7 @@ const CHANNEL_TEMPLATES: Record<string, ChannelTemplate[]> = {
       id: 'push-cashback-earned',
       name: 'Cashback Earned',
       content:
-        '🎉 ₹{amount} cashback credited! Your Paytm wallet balance is now ₹{balance}. Tap to view details.',
+        '🎉 AED {amount} cashback credited! Your Paytm wallet balance is now AED {balance}. Tap to view details.',
       meta: 'Push · Transactional · Deep link: /wallet',
     },
   ],
@@ -268,7 +268,7 @@ const CHANNEL_TEMPLATES: Record<string, ChannelTemplate[]> = {
       id: 'inapp-welcome-offer',
       name: 'Welcome Offer Banner',
       content:
-        'Welcome to Paytm, {name}! 🎁 Get ₹100 cashback on your first UPI transaction. Offer valid for 7 days. [CTA: Claim Now]',
+        'Welcome to Paytm, {name}! 🎁 Get AED 100 cashback on your first UPI transaction. Offer valid for 7 days. [CTA: Claim Now]',
       meta: 'Banner · Full-width · Dismissable',
     },
     {
@@ -282,7 +282,7 @@ const CHANNEL_TEMPLATES: Record<string, ChannelTemplate[]> = {
       id: 'inapp-insurance-cross-sell',
       name: 'Insurance Cross-Sell',
       content:
-        'Protect what matters most. Get ₹10L health cover starting at just ₹{premium}/month. Exclusively for Paytm users. [CTA: Explore Plans]',
+        'Protect what matters most. Get AED 10L health cover starting at just AED {premium}/month. Exclusively for Paytm users. [CTA: Explore Plans]',
       meta: 'Banner · Card · After payment flow',
     },
   ],
@@ -385,7 +385,7 @@ function ChannelConfigTab({ channel, onToast }: ChannelConfigTabProps) {
           </label>
           <div className="flex items-center rounded-md border border-[#E5E7EB] bg-white overflow-hidden focus-within:border-cyan focus-within:ring-1 focus-within:ring-cyan/30 transition-all">
             <span className="px-3 py-2.5 text-sm font-medium text-text-secondary bg-[#F9FAFB] border-r border-[#E5E7EB]">
-              ₹
+              AED 
             </span>
             <input
               type="number"
@@ -734,7 +734,7 @@ function CostUsageTab({ channel, isEmpty }: CostUsageTabProps) {
     },
     {
       label: 'Total Cost (Month)',
-      value: totalCost === 0 ? '₹0' : formatINR(totalCost),
+      value: totalCost === 0 ? 'AED 0' : formatINR(totalCost),
       icon: Zap,
       color: '#7C3AED',
       bg: '#F5F3FF',
@@ -815,7 +815,7 @@ function CostUsageTab({ channel, isEmpty }: CostUsageTabProps) {
           <div className="flex items-center justify-between text-sm">
             <span className="text-text-secondary">Cost per unit</span>
             <span className="font-medium text-text-primary">
-              ₹{channel.unitCost.toFixed(2)}
+              AED {channel.unitCost.toFixed(2)}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
@@ -830,7 +830,7 @@ function CostUsageTab({ channel, isEmpty }: CostUsageTabProps) {
               Total spend
             </span>
             <span className="font-bold text-text-primary">
-              {totalCost === 0 ? '₹0' : formatINR(totalCost)}
+              {totalCost === 0 ? 'AED 0' : formatINR(totalCost)}
             </span>
           </div>
         </div>
@@ -881,7 +881,7 @@ function ChannelCard({ channel, onToast, isEmpty }: ChannelCardProps) {
               {channel.name}
             </p>
             <p className="text-xs text-text-secondary">
-              ₹{channel.unitCost.toFixed(2)} / message ·{' '}
+              AED {channel.unitCost.toFixed(2)} / message ·{' '}
               <span className="capitalize">{channel.type}</span>
             </p>
           </div>
@@ -1145,7 +1145,7 @@ function BillingSection({ onToast }: { onToast: (msg: string) => void }) {
         <div>
           <p className="text-xs font-medium text-white/60">Current Plan</p>
           <p className="mt-1 text-lg font-semibold text-white">
-            Growth Plan — ₹1,00,000/mo
+            Growth Plan — AED 1,00,000/mo
           </p>
           <p className="mt-0.5 text-xs text-white/60">
             Billed monthly · Renews 1 May 2026
@@ -1196,7 +1196,7 @@ function BillingSection({ onToast }: { onToast: (msg: string) => void }) {
                   {isEmpty ? '—' : formatCount(row.sent)}
                 </td>
                 <td className="px-4 py-2.5 text-right text-xs text-text-secondary">
-                  ₹{row.unitCost.toFixed(2)}
+                  AED {row.unitCost.toFixed(2)}
                 </td>
                 <td className="px-4 py-2.5 text-right text-sm font-medium text-text-primary">
                   {isEmpty ? '—' : formatINR(row.sent * row.unitCost)}
@@ -1213,7 +1213,7 @@ function BillingSection({ onToast }: { onToast: (msg: string) => void }) {
                 Total
               </td>
               <td className="px-4 py-2.5 text-right text-sm font-semibold text-text-primary">
-                {isEmpty ? '₹0' : formatINR(totalSpend)}
+                {isEmpty ? 'AED 0' : formatINR(totalSpend)}
               </td>
             </tr>
           </tfoot>

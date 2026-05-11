@@ -17,7 +17,7 @@ export function useCostProjection(channelType: ChannelType, audienceSize: number
     const channel = channels.find((c) => c.id === channelType);
     const unitCost = channel?.unitCost ?? 0;
     const totalCost = unitCost * audienceSize;
-    const formula = `₹${unitCost} × ${audienceSize.toLocaleString('en-IN')} = ₹${totalCost.toLocaleString('en-IN')}`;
+    const formula = `AED ${unitCost} × ${audienceSize.toLocaleString('en-AE')} = AED ${totalCost.toLocaleString('en-AE')}`;
 
     return { totalCost, unitCost, formula };
   }, [channelType, audienceSize]);

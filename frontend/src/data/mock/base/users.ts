@@ -34,9 +34,9 @@ export const audienceSummary = {
   },
 
   ltvDistribution: {
-    high: 48000,       // LTV > ₹25K
-    medium: 108000,    // LTV ₹8K–₹25K
-    low: 84000,        // LTV < ₹8K
+    high: 48000,       // LTV > AED 25K
+    medium: 108000,    // LTV AED 8K–AED 25K
+    low: 84000,        // LTV < AED 8K
   },
 
   kycStatus: {

@@ -93,7 +93,7 @@ const RECOMMENDATION_SEEDS: {
   {
     id: 'rec-2',
     name: 'Dormant Wallet Users — High Balance',
-    description: 'Users inactive 45+ days with wallet balance above ₹500',
+    description: 'Users inactive 45+ days with wallet balance above AED 500',
     size: 92000,
     topChannels: [
       { key: 'sms', label: 'SMS', count: 88000 },

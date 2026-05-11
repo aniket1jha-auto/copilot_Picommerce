@@ -144,7 +144,7 @@ export function FunnelChart({ data }: FunnelChartProps) {
                 fontWeight={600}
                 fill="#1A1A2E"
               >
-                {stage.value.toLocaleString('en-IN')}
+                {stage.value.toLocaleString('en-AE')}
               </text>
 
               {/* Connector trapezoid to next bar */}

@@ -366,7 +366,7 @@ function formatDuration(ms: number): string {
 
 function formatStartedAt(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleString('en-IN', {
+  return d.toLocaleString('en-AE', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

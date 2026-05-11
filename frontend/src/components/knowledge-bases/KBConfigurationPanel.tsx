@@ -53,8 +53,8 @@ export function KBConfigurationPanel({ kb }: Props) {
               : 'Connected data source (coming Q3)'
           }
         />
-        <ConfigRow label="Created" value={new Date(kb.createdAt).toLocaleString('en-IN')} />
-        <ConfigRow label="Last updated" value={new Date(kb.updatedAt).toLocaleString('en-IN')} />
+        <ConfigRow label="Created" value={new Date(kb.createdAt).toLocaleString('en-AE')} />
+        <ConfigRow label="Last updated" value={new Date(kb.updatedAt).toLocaleString('en-AE')} />
       </Card>
 
       <Card className="lg:col-span-2">

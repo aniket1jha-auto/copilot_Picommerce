@@ -23,13 +23,12 @@ interface VoiceCallConfigProps {
 }
 
 const LANGUAGES = [
-  { value: 'hindi', label: 'Hindi' },
   { value: 'english', label: 'English' },
-  { value: 'hinglish', label: 'Hinglish' },
-  { value: 'tamil', label: 'Tamil' },
-  { value: 'telugu', label: 'Telugu' },
-  { value: 'kannada', label: 'Kannada' },
-  { value: 'bengali', label: 'Bengali' },
+  { value: 'arabic', label: 'Arabic' },
+  { value: 'arabic_english', label: 'Arabic + English (code-switch)' },
+  { value: 'urdu', label: 'Urdu' },
+  { value: 'hindi', label: 'Hindi' },
+  { value: 'tagalog', label: 'Tagalog' },
 ];
 
 const DURATION_OPTIONS = [
@@ -76,7 +75,11 @@ function generatePreviewConversation(config: VoiceConfig): ConversationTurn[] {
   const agentName = config.voiceGender === 'female' ? 'Priya' : 'Rahul';
   const langNote =
     config.language === 'hindi' ? '(in Hindi)' :
-    config.language === 'hinglish' ? '(in Hinglish)' : '';
+    config.language === 'arabic'
+      ? '(in Arabic)'
+      : config.language === 'arabic_english'
+        ? '(in Arabic + English code-switch)'
+        : '';
 
   const toneGreeting =
     config.voiceTone === 'urgent'
@@ -96,23 +99,23 @@ function generatePreviewConversation(config: VoiceConfig): ConversationTurn[] {
     },
     {
       role: 'agent',
-      text: "I'm calling regarding your Paytm account. You have a pending KYC verification that needs to be completed to continue using all features. I can help you complete it right now — it only takes 2 minutes. Would you like to proceed?",
+      text: "I'm calling regarding your Paytm UAE account. You have a pending Emirates ID verification that needs to be completed to continue using all features. I can help you complete it right now — it only takes 2 minutes. Would you like to proceed?",
     },
     {
       role: 'user',
-      text: "Kyaa karna hoga? (What do I need to do?)",
+      text: "What do I need to do?",
     },
     {
       role: 'agent',
-      text: "It's very simple. I'll guide you step by step. You'll need your Aadhaar number and PAN card handy. We'll verify your details and you're done. Shall I start the process?",
+      text: "It's very simple. I'll guide you step by step. You'll need your Emirates ID handy. I'll send a one-time code to your registered mobile, you read it back, and we're done. Shall I send it now?",
     },
     {
       role: 'user',
-      text: "Abhi mere paas time nahi hai. (I don't have time right now.)",
+      text: "I don't have time right now.",
     },
     {
       role: 'agent',
-      text: "Absolutely, no problem at all. Can I note down a preferred time when I can call you back? This will ensure you don't face any interruption to your Paytm services.",
+      text: "No problem at all. Can I note down a preferred time when I can call you back? This will make sure you don't face any interruption to your account.",
     },
     {
       role: 'user',

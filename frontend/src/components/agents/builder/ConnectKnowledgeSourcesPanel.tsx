@@ -222,8 +222,8 @@ function AttachmentCard({ attachment, kb, onChange, onDetach }: AttachmentCardPr
             </StatusPill>
           </div>
           <div className="mt-0.5 text-[12px] text-text-tertiary">
-            {kb.documentCount.toLocaleString('en-IN')} docs ·{' '}
-            {kb.chunkCount.toLocaleString('en-IN')} chunks
+            {kb.documentCount.toLocaleString('en-AE')} docs ·{' '}
+            {kb.chunkCount.toLocaleString('en-AE')} chunks
           </div>
         </div>
         <button
@@ -536,8 +536,8 @@ function KBPickerModal({ open, onClose, knowledgeBases, attachedIds, onPick }: P
                   </div>
                 )}
                 <div className="mt-1 text-[11px] text-text-tertiary">
-                  {kb.documentCount.toLocaleString('en-IN')} docs ·{' '}
-                  {kb.chunkCount.toLocaleString('en-IN')} chunks
+                  {kb.documentCount.toLocaleString('en-AE')} docs ·{' '}
+                  {kb.chunkCount.toLocaleString('en-AE')} chunks
                 </div>
               </div>
             </button>

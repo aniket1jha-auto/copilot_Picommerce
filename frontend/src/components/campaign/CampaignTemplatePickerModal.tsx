@@ -142,7 +142,7 @@ function TemplateRow({
           </StatusPill>
         )}
         <span className="ml-auto text-[11px] text-text-tertiary tabular-nums">
-          ~₹{template.tentativeBudgetLakh}L
+          ~AED {(parseFloat(template.tentativeBudgetLakh) * 1000).toLocaleString('en-AE')}
         </span>
       </div>
     </button>

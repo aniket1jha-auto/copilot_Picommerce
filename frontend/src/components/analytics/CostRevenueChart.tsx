@@ -14,21 +14,21 @@ import { theme } from '@/styles/theme';
 
 function formatXAxisDate(dateStr: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  return date.toLocaleDateString('en-AE', { day: 'numeric', month: 'short' });
 }
 
 function formatYAxisValue(value: number): string {
-  if (value === 0) return '₹0';
-  if (value >= 1_00_000) {
-    const lakh = value / 1_00_000;
-    const rounded = Math.round(lakh * 10) / 10;
-    return `₹${rounded}L`;
+  if (value === 0) return 'AED 0';
+  if (value >= 1_000_000) {
+    const m = value / 1_000_000;
+    const rounded = Math.round(m * 10) / 10;
+    return `AED ${rounded}M`;
   }
   if (value >= 1_000) {
     const k = value / 1_000;
-    return `₹${Math.round(k)}K`;
+    return `AED ${Math.round(k)}K`;
   }
-  return `₹${Math.round(value)}`;
+  return `AED ${Math.round(value)}`;
 }
 
 function CustomTooltip(props: TooltipProps<number, string>) {

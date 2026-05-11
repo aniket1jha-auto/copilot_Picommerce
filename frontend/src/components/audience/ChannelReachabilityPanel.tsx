@@ -44,7 +44,7 @@ export function ChannelReachabilityPanel({ segment, segmentSize }: ChannelReacha
                     />
                   </div>
                   <span className="w-16 text-right text-xs font-semibold text-text-primary">
-                    {count.toLocaleString('en-IN')}
+                    {count.toLocaleString('en-AE')}
                   </span>
                   <span className="w-10 text-right text-xs text-text-secondary">{pct}%</span>
                 </div>
