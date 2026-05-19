@@ -103,6 +103,14 @@ interface RecommendationsState {
   dismiss: (id: string) => void;
   /** Revert an apply/dismiss back to pending — exposed for undo scenarios. */
   reopen: (id: string) => void;
+  /**
+   * Insert a recommendation only if a `pending` rec with the same id
+   * doesn't already exist. Used by the copilot to surface contextual
+   * suggestions (e.g. goal/channel mismatch) without spamming repeats.
+   */
+  upsertPending: (rec: Omit<Recommendation, 'status' | 'createdAt'>) => void;
+  /** Remove a recommendation outright (id-keyed). */
+  remove: (id: string) => void;
 }
 
 export const useRecommendationsStore = create<RecommendationsState>((set, get) => ({
@@ -144,5 +152,26 @@ export const useRecommendationsStore = create<RecommendationsState>((set, get) =
       recommendations: s.recommendations.map((r) =>
         r.id === id ? { ...r, status: 'pending' as RecStatus, appliedAt: undefined } : r,
       ),
+    })),
+
+  upsertPending: (rec) =>
+    set((s) => {
+      // If a rec with the same id already exists in pending, don't
+      // re-insert. Applied/dismissed ids are also respected — once
+      // the user has acted on a contextual suggestion, we don't keep
+      // re-surfacing it on every keystroke.
+      const existing = s.recommendations.find((r) => r.id === rec.id);
+      if (existing) return s;
+      const full: Recommendation = {
+        ...rec,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      };
+      return { recommendations: [full, ...s.recommendations] };
+    }),
+
+  remove: (id) =>
+    set((s) => ({
+      recommendations: s.recommendations.filter((r) => r.id !== id),
     })),
 }));

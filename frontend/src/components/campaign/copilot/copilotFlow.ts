@@ -49,9 +49,26 @@ export type Focus =
 
 export type ScheduleType = 'one-time' | 'recurring' | 'event' | 'smart_ai';
 
+/**
+ * Structured campaign goal — mirrors EntryTriggerNodeData.goals[0] but
+ * lives on the BuildingState so the copilot chat can capture it from
+ * free text and the CampaignBuilder syncs it onto the entry node.
+ */
+export interface CopilotGoal {
+  type: 'conversion' | 'engagement' | 'delivery' | 'custom';
+  event: string;
+  eventLabel: string;
+  eventChannel?: 'any' | 'whatsapp' | 'sms' | 'rcs' | 'voice' | 'email' | null;
+  targetValue: number;
+  targetUnit: 'percent' | 'absolute';
+  description: string;
+}
+
 export interface BuildingState {
   focus: Focus;
   goalDescription?: string;
+  /** Structured goal captured by the `set_campaign_goal` intent. */
+  goal?: CopilotGoal;
   name?: string;
   segmentId?: string;
   segmentName?: string;
@@ -131,6 +148,18 @@ function extractAll(raw: string, state: BuildingState, ctx: FlowContext): Extrac
       applied.push('Captured goal');
       if (next.name) applied.push(`Suggested name → ${next.name}`);
     }
+  }
+
+  // 2b) Structured goal — `set_campaign_goal` intent. Pull a target
+  //     number, a goal phase keyword (conversion/engagement/delivery),
+  //     and an optional event token (e.g. transaction_completed,
+  //     whatsapp_delivered). Anything we can pin down here lands on
+  //     the entry node via the CampaignBuilder sync.
+  const goalExtract = extractStructuredGoal(msg, lower);
+  if (goalExtract) {
+    next.goal = { ...(next.goal ?? defaultCopilotGoal()), ...goalExtract.patch };
+    if (!next.goalDescription) next.goalDescription = msg;
+    applied.push(`Goal → ${goalExtract.summary}`);
   }
 
   // 3) Audience extraction — recognize "use the X segment" or any phrase that
@@ -478,3 +507,165 @@ export const SCHEDULE_LABEL: Record<ScheduleType, string> = {
   event: 'Event-based',
   smart_ai: 'Smart + AI',
 };
+
+/* ─── set_campaign_goal intent ──────────────────────────────────────────
+ *
+ * Lightweight free-text → structured-goal extractor. Recognises:
+ *   • Phase keywords: conversion, engagement, delivery
+ *   • Channel keywords: whatsapp, sms, rcs, voice, email
+ *   • Verb→event hints: deliver/delivered, click/clicked, reply/replied,
+ *     read, open/opened, answer/answered
+ *   • Numeric targets: "18%" → percent, "10000" / "10,000" → absolute
+ *   • Common business-event tokens written snake_case
+ *
+ * Returns a partial CopilotGoal patch — caller merges over the current
+ * goal. We intentionally don't try to be exhaustive: the user can
+ * always click into the entry node and pick precisely.
+ * ───────────────────────────────────────────────────────────────────── */
+
+function defaultCopilotGoal(): CopilotGoal {
+  return {
+    type: 'conversion',
+    event: '',
+    eventLabel: '',
+    eventChannel: null,
+    targetValue: 0,
+    targetUnit: 'percent',
+    description: '',
+  };
+}
+
+interface StructuredGoalExtract {
+  patch: Partial<CopilotGoal>;
+  summary: string;
+}
+
+function extractStructuredGoal(raw: string, lower: string): StructuredGoalExtract | null {
+  const patch: Partial<CopilotGoal> = {};
+  const summaryParts: string[] = [];
+
+  // 1. Goal type
+  let foundType = false;
+  if (/\b(conversion|convert|conversions)\b/.test(lower)) {
+    patch.type = 'conversion';
+    foundType = true;
+    summaryParts.push('conversion');
+  } else if (/\b(engagement|engage|engaged)\b/.test(lower)) {
+    patch.type = 'engagement';
+    foundType = true;
+    summaryParts.push('engagement');
+  } else if (/\b(delivery|deliverability)\b/.test(lower) && !/\bdelivered\b/.test(lower)) {
+    // "delivery" the rate vs "delivered" the verb — pick the noun form here.
+    patch.type = 'delivery';
+    foundType = true;
+    summaryParts.push('delivery');
+  }
+
+  // 2. Channel
+  const channelMatch = lower.match(/\b(whatsapp|sms|rcs|voice|email)\b/);
+  let inferredChannel: CopilotGoal['eventChannel'] = null;
+  if (channelMatch) {
+    inferredChannel = channelMatch[1] as CopilotGoal['eventChannel'];
+  }
+
+  // 3. Verb-derived event (only when no explicit business event token)
+  const eventTokenMatch = raw.match(/\b([a-z][a-z0-9]+_[a-z0-9_]+)\b/);
+  if (eventTokenMatch) {
+    patch.event = eventTokenMatch[1];
+    patch.eventLabel = eventTokenMatch[1];
+    if (!foundType) {
+      patch.type = 'conversion';
+      summaryParts.push('conversion');
+    }
+    summaryParts.push(`on ${eventTokenMatch[1]}`);
+  } else {
+    let verb: { id: string; label: string; channel: typeof inferredChannel } | null = null;
+    if (/\bdelivered\b/.test(lower)) {
+      const id = inferredChannel ? `${inferredChannel}_delivered` : 'any_message_delivered';
+      verb = { id, label: prettyEventLabel(id), channel: inferredChannel ?? 'any' };
+      if (!foundType) patch.type = 'delivery';
+    } else if (/\b(clicks?|clicked)\b/.test(lower)) {
+      const id = inferredChannel ? `${inferredChannel}_clicked` : 'any_message_clicked';
+      verb = { id, label: prettyEventLabel(id), channel: inferredChannel ?? 'any' };
+      if (!foundType) patch.type = 'engagement';
+    } else if (/\b(replies?|replied|reply)\b/.test(lower)) {
+      const id = inferredChannel ? `${inferredChannel}_replied` : 'any_message_replied';
+      verb = { id, label: prettyEventLabel(id), channel: inferredChannel ?? 'any' };
+      if (!foundType) patch.type = 'engagement';
+    } else if (/\b(read|opens?|opened)\b/.test(lower)) {
+      if (inferredChannel === 'email') {
+        verb = { id: 'email_opened', label: 'Email opened', channel: 'email' };
+      } else if (inferredChannel === 'whatsapp' || inferredChannel === 'rcs') {
+        verb = {
+          id: `${inferredChannel}_read`,
+          label: prettyEventLabel(`${inferredChannel}_read`),
+          channel: inferredChannel,
+        };
+      }
+      if (verb && !foundType) patch.type = 'engagement';
+    } else if (/\b(answered?|pickups?)\b/.test(lower) && inferredChannel === 'voice') {
+      verb = { id: 'voice_answered', label: 'Voice call answered', channel: 'voice' };
+      if (!foundType) patch.type = 'engagement';
+    }
+    if (verb) {
+      patch.event = verb.id;
+      patch.eventLabel = verb.label;
+      patch.eventChannel = verb.channel;
+      summaryParts.push(`on ${verb.label}`);
+    } else if (inferredChannel) {
+      // Channel mentioned but no verb — assume delivery for safety.
+      const id = `${inferredChannel}_delivered`;
+      patch.event = id;
+      patch.eventLabel = prettyEventLabel(id);
+      patch.eventChannel = inferredChannel;
+      if (!foundType) patch.type = 'delivery';
+      summaryParts.push(`on ${prettyEventLabel(id)}`);
+    }
+  }
+
+  // 4. Numeric target
+  const percentMatch = raw.match(/(\d{1,3}(?:\.\d+)?)\s*%/);
+  const absoluteMatch = !percentMatch
+    ? raw.match(/\b(\d{2,}(?:,\d{3})+|\d{3,})\b(?!\s*%)/)
+    : null;
+  if (percentMatch) {
+    patch.targetValue = parseFloat(percentMatch[1]);
+    patch.targetUnit = 'percent';
+    summaryParts.unshift(`${patch.targetValue}%`);
+  } else if (absoluteMatch) {
+    const n = parseInt(absoluteMatch[1].replace(/,/g, ''), 10);
+    if (!Number.isNaN(n)) {
+      patch.targetValue = n;
+      patch.targetUnit = 'absolute';
+      summaryParts.unshift(n.toLocaleString());
+    }
+  }
+
+  // Only return if we actually pinned down meaningful structure.
+  if (!patch.type && !patch.event && patch.targetValue === undefined) return null;
+  if (!foundType && !patch.event) return null;
+
+  return { patch, summary: summaryParts.join(' ') || 'updated' };
+}
+
+function prettyEventLabel(id: string): string {
+  const map: Record<string, string> = {
+    any_message_delivered: 'Any message delivered',
+    any_message_clicked: 'Any message clicked',
+    any_message_replied: 'Any message replied',
+    whatsapp_delivered: 'WhatsApp delivered',
+    whatsapp_read: 'WhatsApp read',
+    whatsapp_clicked: 'WhatsApp clicked',
+    whatsapp_replied: 'WhatsApp replied',
+    sms_delivered: 'SMS delivered',
+    sms_clicked: 'SMS clicked',
+    rcs_delivered: 'RCS delivered',
+    rcs_read: 'RCS read',
+    rcs_clicked: 'RCS clicked',
+    voice_answered: 'Voice call answered',
+    voice_completed: 'Voice call completed',
+    email_opened: 'Email opened',
+    email_clicked: 'Email clicked',
+  };
+  return map[id] ?? id;
+}

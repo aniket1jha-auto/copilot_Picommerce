@@ -46,7 +46,7 @@ function buildLoanRecoverySampleSteps(): InstructionStepData[] {
         'State the outstanding amount and due date clearly; ask if they can pay today or need a restructuring discussion.',
       transitionCondition:
         'Proceed when the customer acknowledges the dues or asks how to pay.',
-      attachedToolIds: ['send_text'],
+      attachedToolIds: ['send_message'],
       quickReplies: [],
     },
     {
@@ -55,7 +55,7 @@ function buildLoanRecoverySampleSteps(): InstructionStepData[] {
         'Offer repayment options: full payment link, EMI reschedule, or callback from a specialist — match tone to customer sentiment.',
       transitionCondition:
         'Move on once the customer picks an option or requests a supervisor.',
-      attachedToolIds: ['transfer_call', 'api_request'],
+      attachedToolIds: ['transfer_call', 'custom_function'],
       quickReplies: [],
     },
     {

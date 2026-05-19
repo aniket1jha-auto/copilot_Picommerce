@@ -23,7 +23,9 @@ import type {
   PushNodeData,
   RcsMessageNodeData,
   InAppMessageNodeData,
+  Goal,
 } from './journeyTypes';
+import { EntryGoalEditor } from './EntryGoalEditor';
 import { VOICE_OUTPUT_HANDLES, CHAT_OUTPUT_HANDLES } from './journeyConstants';
 import { mergeJourneyNodeData, templateVariableSlots } from './journeyMerge';
 import { ChannelContentEditor } from '@/components/campaign/ChannelContentEditor';
@@ -150,6 +152,20 @@ export function JourneyNodeConfigPanel({ node, onClose, onPatch, audienceSize = 
               <Link to="/audiences" className="mt-2 inline-block text-xs font-medium text-cyan hover:underline">
                 Manage segments →
               </Link>
+            </Section>
+            <Section title="Goal">
+              <EntryGoalEditor
+                goal={(d as EntryTriggerNodeData).goals?.[0]}
+                onChange={(next) => {
+                  // v1 only edits goals[0]. Preserve any future
+                  // secondary-goal slots (currently always empty) so
+                  // we don't drop data when secondary goals ship.
+                  const existing = (d as EntryTriggerNodeData).goals ?? [];
+                  const rest = existing.slice(1);
+                  const nextGoals: Goal[] = next ? [next, ...rest] : rest;
+                  patch({ goals: nextGoals } as Partial<EntryTriggerNodeData>);
+                }}
+              />
             </Section>
             <Section title="Schedule mode">
               <p className="mb-2 text-[11px] leading-snug text-text-secondary">

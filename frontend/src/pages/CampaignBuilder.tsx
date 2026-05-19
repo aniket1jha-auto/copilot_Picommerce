@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { X, ChevronRight, ChevronLeft, Rocket, Save } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Rocket, Save, Pencil, Check } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { usePhaseData } from '@/hooks/usePhaseData';
 import { CopilotChatPane } from '@/components/campaign/copilot/CopilotChatPane';
@@ -18,6 +18,8 @@ import type { CampaignData } from '@/components/campaign/CampaignWizard';
 import type { BuildingState } from '@/components/campaign/copilot/copilotFlow';
 import type { Campaign } from '@/types';
 import { useToast } from '@/components/ui';
+import { useRecommendationsStore } from '@/store/recommendationsStore';
+import { useCampaignStore } from '@/store/campaignStore';
 
 /**
  * Unified copilot-first campaign builder.
@@ -197,11 +199,40 @@ export function CampaignBuilder({ mode = 'create', seedCampaign }: CampaignBuild
           segments.find((s) => s.id === wantAudienceId)?.size ??
           cur.audienceSize;
         const wantSchedule = building.scheduleType ?? cur.scheduleMode;
+
+        // Merge the structured goal that the copilot parsed out of
+        // free text. Like audience, we patch into the existing first
+        // goal rather than replacing — that way the user's manual
+        // tweaks in the panel survive subsequent chat messages.
+        const existingGoal = cur.goals?.[0];
+        let nextGoals = cur.goals;
+        if (building.goal) {
+          const merged = {
+            id: existingGoal?.id ?? `goal-${Date.now().toString(36)}`,
+            type: building.goal.type ?? existingGoal?.type ?? 'conversion',
+            event: building.goal.event ?? existingGoal?.event ?? '',
+            eventLabel: building.goal.eventLabel ?? existingGoal?.eventLabel ?? '',
+            eventChannel: building.goal.eventChannel ?? existingGoal?.eventChannel ?? null,
+            propertyFilters: existingGoal?.propertyFilters ?? [],
+            targetValue: building.goal.targetValue || existingGoal?.targetValue || 0,
+            targetUnit: building.goal.targetUnit ?? existingGoal?.targetUnit ?? 'percent',
+            description:
+              building.goal.description ||
+              existingGoal?.description ||
+              building.goalDescription ||
+              '',
+          };
+          nextGoals = [merged, ...(cur.goals?.slice(1) ?? [])];
+        }
+
+        const goalChanged =
+          JSON.stringify(cur.goals?.[0] ?? null) !== JSON.stringify(nextGoals?.[0] ?? null);
         const needsMerge =
           cur.audienceId !== wantAudienceId ||
           cur.audienceName !== wantName ||
           cur.audienceSize !== wantSize ||
-          cur.scheduleMode !== wantSchedule;
+          cur.scheduleMode !== wantSchedule ||
+          goalChanged;
         if (needsMerge) {
           nextJourney = {
             ...nextJourney,
@@ -215,6 +246,7 @@ export function CampaignBuilder({ mode = 'create', seedCampaign }: CampaignBuild
                       audienceName: wantName,
                       audienceSize: wantSize,
                       scheduleMode: wantSchedule,
+                      goals: nextGoals,
                     },
                   }
                 : n,
@@ -264,6 +296,65 @@ export function CampaignBuilder({ mode = 'create', seedCampaign }: CampaignBuild
     navigate(`/campaigns/${seedCampaign.id}`);
   }
 
+  /**
+   * Save as draft — persists the current builder state as a draft
+   * campaign in the campaign store and bounces the user back to the
+   * campaigns list. In edit mode this is a toast-only "saved" stub
+   * since there's no diff persistence in the mock.
+   */
+  const createCampaign = useCampaignStore((s) => s.createCampaign);
+  function handleSaveAsDraft() {
+    const entry = findEntryNode(campaignData.journey);
+    const entryData = entry?.data as unknown as EntryTriggerNodeData | undefined;
+    const segId = entryData?.audienceId ?? campaignData.segmentId ?? '';
+    const seg = segments.find((s) => s.id === segId);
+    const segmentSize = entryData?.audienceSize ?? seg?.size ?? 0;
+    const segmentReachable = segmentSize; // mock: assume fully reachable
+
+    if (isEditing && seedCampaign) {
+      toast({
+        kind: 'success',
+        title: 'Draft saved',
+        body: `${campaignData.name || seedCampaign.name} — your changes are kept locally. Launch from Review when ready.`,
+      });
+      return;
+    }
+
+    const campaign = createCampaign({
+      name: campaignData.name || 'Untitled Campaign',
+      segmentId: segId,
+      segmentName: entryData?.audienceName ?? seg?.name ?? 'Unknown segment',
+      segmentSize,
+      segmentReachable,
+      channels: [...new Set(campaignData.channels)],
+      budgetAllocated: 0,
+      // No scheduledAt → store assigns 'draft' status.
+    });
+    toast({
+      kind: 'success',
+      title: 'Saved as draft',
+      body: `${campaign.name} is in your drafts. Open it any time to keep editing.`,
+    });
+    navigate('/campaigns');
+  }
+
+  /* ─── Inline-editable name ────────────────────────────────────────── */
+  const [nameEditing, setNameEditing] = useState(false);
+  const [draftName, setDraftName] = useState(campaignData.name);
+  // Keep the inline editor in sync if name changes from elsewhere
+  // (e.g. the copilot setting the name via chat).
+  useEffect(() => {
+    if (!nameEditing) setDraftName(campaignData.name);
+  }, [campaignData.name, nameEditing]);
+
+  function commitName() {
+    const next = draftName.trim();
+    if (next && next !== campaignData.name) {
+      updateCampaign({ name: next });
+    }
+    setNameEditing(false);
+  }
+
   const audienceChip = useMemo(() => {
     const entry = findEntryNode(campaignData.journey);
     if (!entry) return null;
@@ -272,10 +363,116 @@ export function CampaignBuilder({ mode = 'create', seedCampaign }: CampaignBuild
     return `${d.audienceName} · ${(d.audienceSize ?? 0).toLocaleString()} contacts`;
   }, [campaignData.journey]);
 
+  /**
+   * Goal gate — Review & launch (and Save changes, while we're at it)
+   * are disabled until the campaign has a primary goal with both a
+   * type and an event picked.
+   */
+  const goalIsSet = useMemo(() => {
+    const entry = findEntryNode(campaignData.journey);
+    if (!entry) return false;
+    const d = entry.data as unknown as EntryTriggerNodeData;
+    const g = d.goals?.[0];
+    return !!(g && g.type && g.event);
+  }, [campaignData.journey]);
+
+  const launchDisabledReason = !goalIsSet ? 'Set a campaign goal to continue.' : undefined;
+
+  /**
+   * Channel-mismatch recommendation. When the goal targets a specific
+   * channel (e.g. "WhatsApp delivered") but the journey has no node
+   * for that channel, surface a pending recommendation. `upsertPending`
+   * is id-stable so this effect can run on every render without
+   * duplicating cards.
+   */
+  const upsertPending = useRecommendationsStore((s) => s.upsertPending);
+  useEffect(() => {
+    if (!seedCampaign?.id) return; // recommendations are campaign-scoped
+    const entry = findEntryNode(campaignData.journey);
+    const goal = (entry?.data as unknown as EntryTriggerNodeData | undefined)?.goals?.[0];
+    if (!goal || !goal.event) return;
+    const ch = goal.eventChannel;
+    if (!ch || ch === 'any') return;
+
+    // Map goal channel → journey node kind.
+    const KIND_BY_CHANNEL: Record<string, string> = {
+      whatsapp: 'whatsapp_message',
+      sms: 'sms',
+      rcs: 'rcs_message',
+      voice: 'voice_agent',
+      email: 'email',
+    };
+    const needsKind = KIND_BY_CHANNEL[ch];
+    if (!needsKind) return;
+
+    const hasNode = campaignData.journey.nodes.some(
+      (n) => (n.data as { kind?: string }).kind === needsKind,
+    );
+    if (hasNode) return;
+
+    const channelLabel = ch.charAt(0).toUpperCase() + ch.slice(1);
+    upsertPending({
+      id: `mismatch-${seedCampaign.id}-${ch}`,
+      campaignId: seedCampaign.id,
+      kind: 'flow',
+      title: `Your goal targets ${channelLabel} but there's no ${channelLabel} node yet`,
+      description: `Goal "${goal.eventLabel}" measures ${channelLabel} traffic. Add a ${channelLabel} step to the journey so the metric has events to count.`,
+      recommendation: `Add a ${channelLabel} message node before the exit.`,
+      estimatedImpact: 'Unblocks goal measurement',
+      risk: 'low',
+    });
+  }, [campaignData.journey, seedCampaign?.id, upsertPending]);
+
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title={isEditing ? `Edit campaign — ${seedCampaign!.name}` : 'Create campaign'}
+        title={
+          /* Editable name with pencil. Subtle on hover, clear once editing. */
+          nameEditing ? (
+            <div className="flex items-center gap-2">
+              <input
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                onBlur={commitName}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitName();
+                  if (e.key === 'Escape') setNameEditing(false);
+                }}
+                placeholder="Untitled campaign"
+                autoFocus
+                className="w-full min-w-[280px] rounded-md border-b-2 border-cyan bg-transparent text-[22px] font-semibold leading-tight text-text-primary outline-none placeholder:text-text-tertiary"
+              />
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={commitName}
+                aria-label="Save name"
+                className="rounded-md p-1 text-cyan transition-colors hover:bg-cyan/10"
+              >
+                <Check size={16} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setDraftName(campaignData.name);
+                setNameEditing(true);
+              }}
+              className="group inline-flex items-center gap-2 text-left"
+              title="Rename campaign"
+            >
+              <span className="truncate">
+                {campaignData.name?.trim() ||
+                  (isEditing ? seedCampaign!.name : 'Untitled campaign')}
+              </span>
+              <Pencil
+                size={14}
+                className="shrink-0 text-text-tertiary opacity-0 transition-opacity group-hover:opacity-100"
+              />
+            </button>
+          )
+        }
         subtitle={
           isEditing
             ? "Edit the journey on the canvas. Open chat to ask the copilot for changes in plain English."
@@ -299,11 +496,21 @@ export function CampaignBuilder({ mode = 'create', seedCampaign }: CampaignBuild
               <X size={13} />
               Exit
             </button>
+            <button
+              type="button"
+              onClick={handleSaveAsDraft}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-text-secondary transition-colors hover:border-[#D1D5DB] hover:text-text-primary"
+            >
+              <Save size={13} />
+              Save as draft
+            </button>
             {isEditing ? (
               <button
                 type="button"
                 onClick={handleSaveChanges}
-                className="inline-flex items-center gap-1.5 rounded-md bg-cyan px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-cyan/90"
+                disabled={!goalIsSet}
+                title={launchDisabledReason}
+                className="inline-flex items-center gap-1.5 rounded-md bg-cyan px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-cyan/90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-cyan"
               >
                 <Save size={13} />
                 Save changes
@@ -312,10 +519,12 @@ export function CampaignBuilder({ mode = 'create', seedCampaign }: CampaignBuild
               <button
                 type="button"
                 onClick={handoffToReview}
-                className="inline-flex items-center gap-1.5 rounded-md bg-cyan px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-cyan/90"
+                disabled={!goalIsSet}
+                title={launchDisabledReason}
+                className="inline-flex items-center gap-1.5 rounded-md bg-cyan px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-cyan/90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-cyan"
               >
                 <Rocket size={13} />
-                Review & launch
+                Review and launch
               </button>
             )}
           </div>

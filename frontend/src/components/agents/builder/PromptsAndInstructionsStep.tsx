@@ -1,8 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  User,
-  Mic,
-  ListOrdered,
+  FileText,
   Database,
   Shield,
   Volume2,
@@ -12,18 +10,28 @@ import {
   Plus,
   X,
   Check,
+  Sparkles,
+  ChevronDown,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type {
-  AgentConfiguration,
-  InstructionStep,
-  VoiceType,
-} from '@/types/agent';
+import { Link } from 'react-router-dom';
+import type { AgentConfiguration, FeedbackIntent, VoiceType } from '@/types/agent';
+import type { ToolInstance } from '@/types/tool';
 import type { AgentKBAttachment } from '@/types/knowledgeBase';
-import { TONE_OPTIONS, VOICE_OPTIONS, LANGUAGE_OPTIONS } from '@/data/agentConstants';
+import { VOICE_OPTIONS, LANGUAGE_OPTIONS, PROMPT_TEMPLATES } from '@/data/agentConstants';
 import { KBPicker } from './KBPicker';
 import { ChannelIdentityChat } from './ChannelIdentityChat';
 import { Input, Select, cn } from '@/components/ui';
+import { useToolsStore } from '@/store/toolsStore';
+
+/** Slug a tool name so it works as an @mention token. */
+function toolSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
 
 interface Props {
   config: AgentConfiguration;
@@ -66,41 +74,30 @@ function PromptsAndInstructionsVoiceStep({
 }: Props & { chatChannelSection?: boolean }) {
   /* ─── State ────────────────────────────────────────────────────────── */
 
-  // 1. Role
-  const [role, setRole] = useState(config.personality.role);
+  // Configured tools the user can @-reference from the prompt.
+  const configuredTools = useToolsStore((s) => s.tools);
 
-  // 2. Tone
-  const [tone, setTone] = useState(config.personality.tone);
-  // Personality traits removed from the UI — preserve whatever was on
-  // the existing agent so editing doesn't blow away pre-existing data.
-  const traits = config.personality.traits;
+  // Role + Tone + Conversation Steps were removed in favour of a single
+  // Retell-style prompt textarea. We preserve whatever was already on
+  // the agent so legacy consumers don't see fields blanked on save.
+  const preservedRole = config.personality.role;
+  const preservedTone = config.personality.tone;
+  const preservedTraits = config.personality.traits;
 
-  // 3. Steps & system prompt
+  // System prompt — the single source of behavioral instruction now.
+  // Tools are referenced inline via @tool_name mentions.
   const [systemPrompt, setSystemPrompt] = useState(config.systemPrompt);
-  const [steps, setSteps] = useState<InstructionStep[]>(
-    () =>
-      config.instructionSteps?.length
-        ? config.instructionSteps
-        : [
-            {
-              id: newStepId(),
-              instruction: '',
-              transitionCondition: '',
-              attachedToolIds: [],
-              quickReplies: [],
-            },
-          ],
-  );
 
   // 4. Knowledge
   const [kbAttachments, setKbAttachments] = useState<AgentKBAttachment[]>(
     () => config.knowledgeBases ?? [],
   );
 
-  // 5. Guardrails
-  const [objectives, setObjectives] = useState<string[]>(config.objectives);
-  const [dos, setDos] = useState<string[]>(config.guidelines.dos);
-  const [donts, setDonts] = useState<string[]>(config.guidelines.donts);
+  // 5. Feedback Intents — post-call tagging vocabulary. Replaces the
+  // old Guardrails (Do's/Don'ts/Key Intents). Optional.
+  const [feedbackIntents, setFeedbackIntents] = useState<FeedbackIntent[]>(
+    () => config.feedbackIntents ?? [],
+  );
 
   // 6. Voice (voice agents only — chat path handled in section 6b below)
   const [voice, setVoice] = useState<VoiceType>(config.voice);
@@ -120,46 +117,54 @@ function PromptsAndInstructionsVoiceStep({
 
   /* ─── Validation ───────────────────────────────────────────────────── */
 
-  const hasIntent = objectives.some((o) => o.trim().length > 0);
-  const missingRole = role.trim().length === 0;
+  // Only the prompt is required now. Feedback intents are optional —
+  // an agent without tags simply means calls land uncategorized.
   const missingPrompt = systemPrompt.trim().length === 0;
-  const missingStep = steps.every((s) => !s.instruction.trim());
-  const isValid = !missingRole && !missingPrompt && !missingStep && hasIntent;
+  const isValid = !missingPrompt;
+
+  /* ─── Mention resolution ───────────────────────────────────────────── */
+  // Parse @tool_name mentions out of the prompt and resolve them to
+  // the matching configured-tool instance ids. These get mirrored
+  // into both `attachedToolIds` (on the synthetic single instruction
+  // step we keep for back-compat) and `globalToolIds`.
+
+  const mentionedToolIds = useMemo(() => {
+    const matches = systemPrompt.match(/@[a-zA-Z0-9_]+/g) ?? [];
+    const wanted = new Set(matches.map((m) => m.slice(1).toLowerCase()));
+    return configuredTools
+      .filter((t) => wanted.has(toolSlug(t.name)))
+      .map((t) => t.id);
+  }, [systemPrompt, configuredTools]);
 
   /* ─── Actions ──────────────────────────────────────────────────────── */
 
-  const updateStep = useCallback(
-    (id: string, patch: Partial<InstructionStep>) => {
-      setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
-    },
-    [],
-  );
-
-  const removeStep = useCallback((id: string) => {
-    setSteps((prev) => (prev.length <= 1 ? prev : prev.filter((s) => s.id !== id)));
-  }, []);
-
-  const addStep = useCallback(() => {
-    setSteps((prev) => [
-      ...prev,
-      {
-        id: newStepId(),
-        instruction: '',
-        transitionCondition: '',
-        attachedToolIds: [],
-        quickReplies: [],
-      },
-    ]);
-  }, []);
-
   const handleNext = () => {
     onSave({
-      personality: { traits, tone, role },
+      // Preserve previously-set role/tone/traits so existing agents
+      // don't get their personality wiped on save.
+      personality: { traits: preservedTraits, tone: preservedTone, role: preservedRole },
       systemPrompt,
-      instructionSteps: steps,
+      // Synthesize a single instruction step from the prompt so
+      // downstream code that walks instructionSteps (review screen,
+      // mock agents, etc.) keeps working.
+      instructionSteps: [
+        {
+          id: 'inst-prompt',
+          instruction: systemPrompt,
+          transitionCondition: '',
+          attachedToolIds: mentionedToolIds,
+          quickReplies: [],
+        },
+      ],
+      globalToolIds: mentionedToolIds,
       knowledgeBases: kbAttachments,
-      objectives,
-      guidelines: { dos, donts },
+      // Filter blank intents before saving — only persist entries that
+      // have at least a label so dashboards aren't polluted by drafts.
+      feedbackIntents: feedbackIntents.filter((f) => f.label.trim().length > 0),
+      // Preserve legacy guardrail fields so existing agents don't get
+      // them wiped on save. We just don't ask for them anymore.
+      objectives: config.objectives,
+      guidelines: config.guidelines,
       voice,
       llmConfig: { ...config.llmConfig, temperature, maxTokens },
       conversationSettings: {
@@ -225,115 +230,19 @@ function PromptsAndInstructionsVoiceStep({
         </p>
       </div>
 
-      {/* 1. Role */}
-      <Section icon={User} title="Role" subtitle="Who is this agent? (e.g., Sales rep, Support agent, Loan recovery specialist)">
-        <Input
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          placeholder="e.g., Sales Representative"
-          error={missingRole ? 'Role is required' : undefined}
-          data-testid="role-input"
+      {/* 1. Prompt — single Retell-style textarea with @-tool mentions
+            and an optional template populate button up top. */}
+      <Section
+        icon={FileText}
+        title="Prompt"
+        subtitle="Write one prompt describing the agent's role, tone, and behavior. Reference tools you've configured by typing @tool_name."
+      >
+        <PromptEditor
+          value={systemPrompt}
+          onChange={setSystemPrompt}
+          tools={configuredTools}
+          missing={missingPrompt}
         />
-      </Section>
-
-      {/* 2. Tone */}
-      <Section
-        icon={Mic}
-        title="Tone"
-        subtitle="Default communication style for the agent."
-      >
-        <Select
-          label="Tone"
-          value={tone}
-          onChange={(e) => setTone(e.target.value)}
-          data-testid="tone-select"
-        >
-          {TONE_OPTIONS.map((opt) => (
-            <option key={opt.id} value={opt.id}>
-              {opt.label}
-            </option>
-          ))}
-        </Select>
-      </Section>
-
-      {/* 3. Steps & Instructions */}
-      <Section
-        icon={ListOrdered}
-        title="Steps & Instructions"
-        subtitle="Write the overall system prompt + the ordered playbook the agent should follow."
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-text-secondary">
-              System prompt *
-            </label>
-            <textarea
-              value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-              placeholder="You are a helpful assistant that…&#10;&#10;Your main goal is to…&#10;&#10;Key responsibilities:&#10;- …"
-              rows={6}
-              className="w-full rounded-md border border-[#E5E7EB] px-3 py-2 font-mono text-[13px] focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
-              data-testid="system-prompt-input"
-            />
-            {missingPrompt && (
-              <p className="mt-1 text-[11px] text-error">A system prompt is required.</p>
-            )}
-          </div>
-          <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-text-secondary">
-              Conversation steps *
-            </label>
-            <ul className="flex flex-col gap-2">
-              {steps.map((step, idx) => (
-                <li key={step.id} className="rounded-md border border-[#E5E7EB] bg-white p-3">
-                  <div className="flex items-start gap-2">
-                    <span className="mt-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan/10 text-[11px] font-semibold text-cyan">
-                      {idx + 1}
-                    </span>
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <textarea
-                        value={step.instruction}
-                        onChange={(e) => updateStep(step.id, { instruction: e.target.value })}
-                        placeholder="What should the agent do at this step?"
-                        rows={2}
-                        className="w-full rounded-md border border-[#E5E7EB] px-3 py-2 text-[13px] focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
-                      />
-                      <input
-                        value={step.transitionCondition ?? ''}
-                        onChange={(e) =>
-                          updateStep(step.id, { transitionCondition: e.target.value })
-                        }
-                        placeholder="Optional: when to move on (e.g., once the customer confirms identity)"
-                        className="w-full rounded-md border border-[#E5E7EB] px-3 py-1.5 text-[12px] text-text-secondary focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
-                      />
-                    </div>
-                    {steps.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeStep(step.id)}
-                        aria-label="Remove step"
-                        className="rounded-md p-1.5 text-text-tertiary transition-colors hover:bg-error-soft hover:text-error"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              onClick={addStep}
-              className="mt-2 inline-flex items-center gap-1 text-[12px] font-medium text-cyan hover:underline"
-            >
-              <Plus size={12} />
-              Add step
-            </button>
-            {missingStep && (
-              <p className="mt-1 text-[11px] text-error">Add at least one step with instructions.</p>
-            )}
-          </div>
-        </div>
       </Section>
 
       {/* 4. Knowledge */}
@@ -345,52 +254,16 @@ function PromptsAndInstructionsVoiceStep({
         <KBPicker attachments={kbAttachments} onChange={setKbAttachments} />
       </Section>
 
-      {/* 5. Guardrails / Do's & Don'ts */}
+      {/* 5. Feedback Intents — post-call tagging vocabulary */}
       <Section
         icon={Shield}
-        title="Guardrails"
-        subtitle="What the agent must accomplish — and what it must never do."
+        title="Feedback Intents"
+        subtitle="Define the tags the platform should apply to a conversation once the call ends — your team uses these to categorize outcomes in dashboards. For example: Interested, Not Eligible, Callback Requested."
       >
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-text-secondary">
-              Key intents *
-            </label>
-            <ListEditor
-              items={objectives}
-              onChange={setObjectives}
-              placeholder="e.g., Qualify lead, capture call-back time"
-              addLabel="Add intent"
-            />
-            {!hasIntent && (
-              <p className="mt-1 text-[11px] text-error">Add at least one key intent.</p>
-            )}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-[12px] font-medium text-text-secondary">
-                Do's
-              </label>
-              <ListEditor
-                items={dos}
-                onChange={setDos}
-                placeholder="Do this…"
-                addLabel="Add Do"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-[12px] font-medium text-text-secondary">
-                Don'ts
-              </label>
-              <ListEditor
-                items={donts}
-                onChange={setDonts}
-                placeholder="Don't do this…"
-                addLabel="Add Don't"
-              />
-            </div>
-          </div>
-        </div>
+        <FeedbackIntentsEditor
+          intents={feedbackIntents}
+          onChange={setFeedbackIntents}
+        />
       </Section>
 
       {/* 6. Voice (voice agents) — or — Channel & Identity (chat agents) */}
@@ -609,12 +482,8 @@ function PromptsAndInstructionsVoiceStep({
 
 /* ─── Helpers ─────────────────────────────────────────────────────────── */
 
-function newStepId(): string {
-  return `step_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
 interface SectionProps {
-  icon: typeof User;
+  icon: LucideIcon;
   title: string;
   subtitle?: string;
   children: ReactNode;
@@ -656,47 +525,438 @@ function Section({
   );
 }
 
-interface ListEditorProps {
-  items: string[];
-  onChange: (next: string[]) => void;
-  placeholder: string;
-  addLabel: string;
+/* ─── FeedbackIntentsEditor ────────────────────────────────────────────
+ * Add-a-pair editor for post-call tagging. Each row is a {label,
+ * description} tuple: the label is the short tag dashboards show,
+ * the description tells reviewers (and the LLM) when to apply it.
+ *
+ * Empty state shows the canonical example so users immediately
+ * understand the shape — "Interested → User was interested to take
+ * a loan".
+ * ─────────────────────────────────────────────────────────────────── */
+
+interface FeedbackIntentsEditorProps {
+  intents: FeedbackIntent[];
+  onChange: (next: FeedbackIntent[]) => void;
 }
 
-function ListEditor({ items, onChange, placeholder, addLabel }: ListEditorProps) {
+function newIntentId(): string {
+  return `fi-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function FeedbackIntentsEditor({ intents, onChange }: FeedbackIntentsEditorProps) {
+  function addIntent() {
+    onChange([...intents, { id: newIntentId(), label: '', description: '' }]);
+  }
+
+  function updateIntent(id: string, patch: Partial<FeedbackIntent>) {
+    onChange(intents.map((i) => (i.id === id ? { ...i, ...patch } : i)));
+  }
+
+  function removeIntent(id: string) {
+    onChange(intents.filter((i) => i.id !== id));
+  }
+
   return (
-    <div className="space-y-2">
-      {items.map((item, idx) => (
-        <div key={idx} className="flex items-center gap-2">
+    <div className="space-y-3">
+      {intents.length === 0 && (
+        <div className="rounded-md border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-3 py-3 text-[12px] leading-relaxed text-text-secondary">
+          <p className="font-medium text-text-primary">
+            Add at least one intent to enable post-call tagging.
+          </p>
+          <p className="mt-1">
+            <span className="font-mono text-[11.5px] text-text-primary">Interested</span>
+            <span className="text-text-tertiary"> : </span>
+            <span>User was interested to take a loan</span>
+          </p>
+        </div>
+      )}
+
+      {intents.length > 0 && (
+        <div className="grid grid-cols-[160px_1fr_auto] gap-2 pb-1 text-[10.5px] font-semibold uppercase tracking-wide text-text-tertiary">
+          <span>Label</span>
+          <span>Description</span>
+          <span aria-hidden />
+        </div>
+      )}
+
+      {intents.map((intent) => (
+        <div key={intent.id} className="grid grid-cols-[160px_1fr_auto] items-start gap-2">
           <input
             type="text"
-            value={item}
-            onChange={(e) => {
-              const next = [...items];
-              next[idx] = e.target.value;
-              onChange(next);
-            }}
-            placeholder={placeholder}
-            className="flex-1 rounded-md border border-[#E5E7EB] px-3 py-1.5 text-[13px] focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
+            value={intent.label}
+            onChange={(e) => updateIntent(intent.id, { label: e.target.value })}
+            placeholder="Interested"
+            className="rounded-md border border-[#E5E7EB] px-3 py-1.5 text-[13px] font-mono focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
+          />
+          <input
+            type="text"
+            value={intent.description}
+            onChange={(e) => updateIntent(intent.id, { description: e.target.value })}
+            placeholder="User was interested to take a loan"
+            className="rounded-md border border-[#E5E7EB] px-3 py-1.5 text-[13px] focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
           />
           <button
             type="button"
-            onClick={() => onChange(items.filter((_, i) => i !== idx))}
-            aria-label="Remove"
-            className="rounded-md p-1 text-text-tertiary hover:bg-error-soft hover:text-error"
+            onClick={() => removeIntent(intent.id)}
+            aria-label="Remove intent"
+            className="rounded-md p-1.5 text-text-tertiary hover:bg-error-soft hover:text-error"
           >
             <X size={14} />
           </button>
         </div>
       ))}
+
       <button
         type="button"
-        onClick={() => onChange([...items, ''])}
+        onClick={addIntent}
         className="inline-flex items-center gap-1 text-[12px] font-medium text-cyan hover:underline"
       >
         <Plus size={12} />
-        {addLabel}
+        Add intent
       </button>
+    </div>
+  );
+}
+
+/* ─── PromptEditor ────────────────────────────────────────────────────── */
+
+/**
+ * Retell-style prompt editor:
+ *   • "Start from template" dropdown above the textarea — populates the
+ *     prompt with a pre-built starter.
+ *   • Plain textarea below. Typing `@` opens an inline picker over the
+ *     user's configured tools (from useToolsStore). Selecting a tool
+ *     inserts `@tool_slug ` at the cursor.
+ *   • Helper chips below the textarea show which tools the prompt
+ *     currently references and link out to /tools for new ones.
+ */
+interface PromptEditorProps {
+  value: string;
+  onChange: (next: string) => void;
+  tools: ToolInstance[];
+  missing: boolean;
+}
+
+function PromptEditor({ value, onChange, tools, missing }: PromptEditorProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [templateOpen, setTemplateOpen] = useState(false);
+
+  /**
+   * Mention state — set while the user is typing `@<query>` immediately
+   * before the cursor. `anchor` is the byte index of the `@`. We use it
+   * to splice in the chosen tool slug.
+   */
+  const [mention, setMention] = useState<{ query: string; anchor: number } | null>(null);
+  const [highlightIdx, setHighlightIdx] = useState(0);
+
+  const filteredTools = useMemo(() => {
+    if (!mention) return [];
+    const q = mention.query.toLowerCase();
+    return tools.filter((t) => {
+      const slug = toolSlug(t.name);
+      return slug.includes(q) || t.name.toLowerCase().includes(q);
+    });
+  }, [tools, mention]);
+
+  // Keep highlight in range as the filtered list changes.
+  useEffect(() => {
+    if (highlightIdx >= filteredTools.length) setHighlightIdx(0);
+  }, [filteredTools.length, highlightIdx]);
+
+  /** Scan back from cursor for an active `@<word>` token. */
+  function detectMention(text: string, cursor: number) {
+    let i = cursor - 1;
+    while (i >= 0 && /[a-zA-Z0-9_]/.test(text[i])) i--;
+    if (i >= 0 && text[i] === '@') {
+      const query = text.slice(i + 1, cursor);
+      setMention({ query, anchor: i });
+      setHighlightIdx(0);
+    } else {
+      setMention(null);
+    }
+  }
+
+  function onTextChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    onChange(e.target.value);
+    detectMention(e.target.value, e.target.selectionStart ?? 0);
+  }
+
+  function onSelectClick() {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    detectMention(ta.value, ta.selectionStart ?? 0);
+  }
+
+  function insertMention(tool: ToolInstance) {
+    if (!mention) return;
+    const slug = toolSlug(tool.name);
+    const before = value.slice(0, mention.anchor);
+    const after = value.slice(mention.anchor + 1 + mention.query.length);
+    // Trailing space so the user can keep typing after the mention.
+    const next = `${before}@${slug} ${after}`;
+    onChange(next);
+    setMention(null);
+    requestAnimationFrame(() => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      const pos = before.length + 1 + slug.length + 1;
+      ta.focus();
+      ta.setSelectionRange(pos, pos);
+    });
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (!mention || filteredTools.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightIdx((i) => (i + 1) % filteredTools.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightIdx((i) => (i - 1 + filteredTools.length) % filteredTools.length);
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      const chosen = filteredTools[highlightIdx];
+      if (chosen) insertMention(chosen);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setMention(null);
+    }
+  }
+
+  // Compute which tools are currently referenced in the prompt (for the
+  // helper chips beneath the textarea — independent of the active mention).
+  const referencedTools = useMemo(() => {
+    const matches = value.match(/@[a-zA-Z0-9_]+/g) ?? [];
+    const wanted = new Set(matches.map((m) => m.slice(1).toLowerCase()));
+    return tools.filter((t) => wanted.has(toolSlug(t.name)));
+  }, [value, tools]);
+
+  return (
+    <div className="space-y-2">
+      {/* Template populate row */}
+      <div className="flex items-center justify-between">
+        <label className="text-[12px] font-medium text-text-secondary">
+          Prompt *
+        </label>
+        <TemplatePicker
+          open={templateOpen}
+          onOpenChange={setTemplateOpen}
+          onPick={(prompt) => onChange(prompt)}
+          hasExisting={value.trim().length > 0}
+        />
+      </div>
+
+      {/* Textarea + mention popup */}
+      <div className="relative">
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={onTextChange}
+          onClick={onSelectClick}
+          onKeyUp={onSelectClick}
+          onKeyDown={onKeyDown}
+          rows={14}
+          placeholder={
+            'You are a friendly sales rep at [Company]. Greet the customer, qualify them, and book a callback.\n\nUse @kb_query_recovery_playbook to look up scripts.\nWhen the customer is ready to hang up, call @polite_goodbye.'
+          }
+          className="w-full rounded-md border border-[#E5E7EB] px-3 py-2 font-mono text-[13px] focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
+          data-testid="system-prompt-input"
+          spellCheck
+        />
+        {mention && (
+          <MentionPopup
+            tools={filteredTools}
+            highlightIdx={highlightIdx}
+            query={mention.query}
+            onSelect={insertMention}
+            onClose={() => setMention(null)}
+          />
+        )}
+      </div>
+
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[11px] leading-snug text-text-tertiary">
+          Type <code className="rounded bg-[#F3F4F6] px-1 py-px font-mono text-[10.5px]">@</code>{' '}
+          to reference a tool you've configured. Create new tools in{' '}
+          <Link to="/tools" className="font-medium text-cyan hover:underline">
+            Tools →
+          </Link>
+        </p>
+        {missing && (
+          <p className="shrink-0 text-[11px] text-error">A prompt is required.</p>
+        )}
+      </div>
+
+      {referencedTools.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <span className="text-[10.5px] font-semibold uppercase tracking-wide text-text-tertiary">
+            Referenced tools:
+          </span>
+          {referencedTools.map((t) => (
+            <span
+              key={t.id}
+              className="inline-flex items-center gap-1 rounded-full bg-cyan/10 px-2 py-0.5 text-[11px] font-medium text-cyan"
+            >
+              @{toolSlug(t.name)}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── @-mention popup ─────────────────────────────────────────────────── */
+
+function MentionPopup({
+  tools,
+  highlightIdx,
+  query,
+  onSelect,
+  onClose,
+}: {
+  tools: ToolInstance[];
+  highlightIdx: number;
+  query: string;
+  onSelect: (t: ToolInstance) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-md border border-[#E5E7EB] bg-white shadow-lg"
+      // Mousedown would steal focus from the textarea before we can splice.
+      onMouseDown={(e) => e.preventDefault()}
+    >
+      <div className="border-b border-[#F3F4F6] px-3 py-1.5">
+        <p className="text-[10.5px] font-semibold uppercase tracking-wide text-text-tertiary">
+          Tools {query && <span className="font-mono normal-case text-text-secondary">— @{query}</span>}
+        </p>
+      </div>
+      {tools.length === 0 ? (
+        <div className="px-3 py-3">
+          <p className="text-[12px] text-text-secondary">
+            No tools match "@{query}".
+          </p>
+          <Link
+            to="/tools"
+            onClick={onClose}
+            className="mt-1 inline-block text-[11px] font-medium text-cyan hover:underline"
+          >
+            Create a tool →
+          </Link>
+        </div>
+      ) : (
+        <ul className="flex flex-col">
+          {tools.map((t, idx) => {
+            const active = idx === highlightIdx;
+            return (
+              <li key={t.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelect(t)}
+                  className={cn(
+                    'flex w-full items-center gap-2 px-3 py-2 text-left transition-colors',
+                    active ? 'bg-cyan/10' : 'hover:bg-cyan/5',
+                  )}
+                >
+                  <span className="font-mono text-[11.5px] font-semibold text-cyan">
+                    @{toolSlug(t.name)}
+                  </span>
+                  <span className="truncate text-[12px] text-text-secondary">{t.name}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* ─── Template picker (above the prompt) ─────────────────────────────── */
+
+function TemplatePicker({
+  open,
+  onOpenChange,
+  onPick,
+  hasExisting,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onPick: (prompt: string) => void;
+  hasExisting: boolean;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) onOpenChange(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onOpenChange(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open, onOpenChange]);
+
+  function pick(template: (typeof PROMPT_TEMPLATES)[number]) {
+    if (
+      hasExisting &&
+      !window.confirm(
+        `Replace the current prompt with the "${template.name}" template?`,
+      )
+    ) {
+      return;
+    }
+    onPick(template.systemPrompt);
+    onOpenChange(false);
+  }
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => onOpenChange(!open)}
+        className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-white px-2.5 py-1 text-[11.5px] font-medium text-text-primary transition-colors hover:border-cyan/40"
+      >
+        <Sparkles size={12} className="text-cyan" />
+        Start from template
+        <ChevronDown size={11} className={cn('transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-30 mt-1 w-72 overflow-hidden rounded-md border border-[#E5E7EB] bg-white shadow-lg"
+        >
+          <div className="border-b border-[#F3F4F6] px-3 py-2">
+            <p className="text-[10.5px] font-semibold uppercase tracking-wide text-text-tertiary">
+              Pre-built prompts
+            </p>
+          </div>
+          <ul>
+            {PROMPT_TEMPLATES.map((t) => (
+              <li key={t.id}>
+                <button
+                  type="button"
+                  onClick={() => pick(t)}
+                  className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left transition-colors hover:bg-cyan/5"
+                >
+                  <span className="text-[12.5px] font-semibold text-text-primary">{t.name}</span>
+                  <span className="text-[10.5px] text-text-tertiary">
+                    Pre-configured starter you can edit
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

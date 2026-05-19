@@ -154,6 +154,45 @@ function entrySubLabel(e: EntryTriggerNodeData) {
   return `${e.recurringFrequency} · ${e.recurringDay}s @ ${e.recurringTime}`;
 }
 
+/**
+ * One-line goal summary for the entry node card.
+ * Format mirrors EntryGoalEditor.summarizeGoal so users see the same
+ * shape whether they're reading the chip or the panel.
+ */
+function entryGoalChip(e: EntryTriggerNodeData): string | null {
+  const g = e.goals?.[0];
+  if (!g || !g.type || !g.event) return null;
+  const filters =
+    g.propertyFilters.length > 0
+      ? ` (${g.propertyFilters
+          .filter((f) => f.property && f.value)
+          .map((f) => `${f.property} ${shortOp(f.operator)} ${f.value}`)
+          .join(', ')})`
+      : '';
+  return `${g.type} on ${g.eventLabel || g.event}${filters}`;
+}
+
+function shortOp(op: string): string {
+  switch (op) {
+    case 'equals':
+      return '=';
+    case 'not_equals':
+      return '≠';
+    case 'gt':
+      return '>';
+    case 'gte':
+      return '≥';
+    case 'lt':
+      return '<';
+    case 'lte':
+      return '≤';
+    case 'contains':
+      return '∋';
+    default:
+      return op;
+  }
+}
+
 /* ─── Inline-editable label ────────────────────────────────────────── */
 
 function NodeTitle({
@@ -250,6 +289,25 @@ function TriggerNode({ id, data, selected }: { id: string; data: JourneyNodeData
               {entrySubLabel(entry)}
             </p>
           )}
+          {/* Goal chip — extra line below schedule / event summary.
+              Shows "🎯 No goal set" in muted state if unset; in either
+              case clicking the node opens the panel and the user can
+              navigate to the Goal section. */}
+          {entry &&
+            (() => {
+              const summary = entryGoalChip(entry);
+              return (
+                <p
+                  className={[
+                    'mt-1 line-clamp-2 text-[11px] leading-snug',
+                    summary ? 'text-text-secondary' : 'text-text-tertiary italic',
+                  ].join(' ')}
+                  title={summary ?? 'Click the entry node to set a goal'}
+                >
+                  🎯 {summary ?? 'No goal set'}
+                </p>
+              );
+            })()}
         </div>
       </div>
 

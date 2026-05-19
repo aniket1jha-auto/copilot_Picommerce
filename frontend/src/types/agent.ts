@@ -77,6 +77,20 @@ export interface InstructionStep {
   quickReplies?: string[];
 }
 
+/**
+ * A single post-call tag the platform uses to categorize completed
+ * conversations. `label` is the short key shown in dashboards;
+ * `description` tells the LLM (and human reviewers) when to apply it.
+ *
+ * Example: { label: 'Interested', description: 'User was interested
+ * to take a loan' }.
+ */
+export interface FeedbackIntent {
+  id: string;
+  label: string;
+  description: string;
+}
+
 export interface AgentConfiguration {
   // Step 1: Basic Info
   name: string;
@@ -102,11 +116,26 @@ export interface AgentConfiguration {
     tone: string;
     role: string;
   };
+  /**
+   * @deprecated Replaced by `feedbackIntents` in the post-call-tagging
+   * refactor. Kept on the type so legacy agents + the orphaned
+   * PromptStep.tsx still compile.
+   */
   objectives: string[];
+  /**
+   * @deprecated Same — Do's/Don'ts were folded into the prompt itself.
+   * Kept on the type for back-compat only.
+   */
   guidelines: {
     dos: string[];
     donts: string[];
   };
+  /**
+   * Post-call tagging vocabulary. Each entry is a {label → description}
+   * pair the platform uses to categorize completed conversations.
+   * Optional — agents work fine without any tags configured.
+   */
+  feedbackIntents?: FeedbackIntent[];
   exampleConversations?: {
     user: string;
     agent: string;

@@ -43,6 +43,36 @@ export interface JourneyMessagingEditorFields {
   testing: TestingConfig;
 }
 
+/**
+ * Campaign goal — defines what success looks like for this journey.
+ *
+ * Shipped as an array (`EntryTriggerNodeData.goals`) so secondary goals
+ * can be added without a data migration. v1 UI only exposes the
+ * first/primary goal.
+ */
+export type GoalType = 'conversion' | 'engagement' | 'delivery' | 'custom';
+export type GoalUnit = 'percent' | 'absolute';
+
+export interface GoalPropertyFilter {
+  id: string;
+  property: string;
+  operator: string;
+  value: string;
+}
+
+export interface Goal {
+  id: string;
+  type: GoalType;
+  event: string; // catalog event id, e.g. 'transaction_completed'
+  eventLabel: string; // denormalized for display + chip on the node card
+  /** Implied channel for the event, used by the channel-mismatch recommendation. */
+  eventChannel?: 'any' | 'whatsapp' | 'sms' | 'rcs' | 'voice' | 'email' | null;
+  propertyFilters: GoalPropertyFilter[];
+  targetValue: number;
+  targetUnit: GoalUnit;
+  description: string;
+}
+
 export interface EntryTriggerNodeData extends JourneyNodeBase {
   kind: 'entry_trigger';
   /** Legacy schedule kind (kept for back-compat with older journeys). */
@@ -62,6 +92,11 @@ export interface EntryTriggerNodeData extends JourneyNodeBase {
   audienceName?: string;
   audienceSize?: number;
   scheduleMode?: 'one-time' | 'recurring' | 'event' | 'smart_ai';
+  /**
+   * Campaign goals. v1 UI only edits `goals[0]`. The array shape is
+   * intentional so secondary goals can ship without a migration.
+   */
+  goals?: Goal[];
 }
 
 export interface VoiceAgentNodeData extends JourneyNodeBase {

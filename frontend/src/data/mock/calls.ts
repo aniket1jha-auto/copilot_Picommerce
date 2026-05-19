@@ -28,7 +28,7 @@ export const failureModeCatalog: FailureModeMeta[] = [
     label: 'Aadhaar OTP gateway timeout',
     description:
       'Send-text tool fails to deliver the Aadhaar OTP link. Usually a UIDAI service hiccup.',
-    rootToolId: 'send_text',
+    rootToolId: 'send_message',
   },
   {
     id: 'transfer_unavailable',
