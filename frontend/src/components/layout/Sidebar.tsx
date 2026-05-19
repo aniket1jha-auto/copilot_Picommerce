@@ -6,7 +6,10 @@ import {
   Wrench,
   Users,
   Library,
-  BarChart3,
+  Database,
+  Activity,
+  Radio,
+  LayoutGrid,
   KeyRound,
   Plug2,
   Settings2,
@@ -39,6 +42,7 @@ const navSections: NavSection[] = [
     items: [
       { to: '/campaigns', icon: Megaphone, label: 'Campaigns' },
       { to: '/agents', icon: Bot, label: 'Agents' },
+      { to: '/knowledge-base', icon: Database, label: 'Knowledge Base' },
       { to: '/tools', icon: Wrench, label: 'Tools' },
       { to: '/audiences', icon: Users, label: 'Audiences' },
       { to: '/content-library', icon: Library, label: 'Content Library' },
@@ -47,7 +51,9 @@ const navSections: NavSection[] = [
   {
     heading: 'OBSERVE',
     items: [
-      { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+      { to: '/observe/performance', icon: Activity, label: 'Performance' },
+      { to: '/observe/channels', icon: Radio, label: 'Channels' },
+      { to: '/observe/reporting', icon: LayoutGrid, label: 'Reporting' },
     ],
   },
   {

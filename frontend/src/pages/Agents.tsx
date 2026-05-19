@@ -1,9 +1,95 @@
-import { Link } from 'react-router-dom';
-import { Plus, Phone, MessageSquare, Play, TrendingUp, Clock } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Phone, MessageSquare, Play, TrendingUp, Clock, ChevronDown } from 'lucide-react';
 import { useAgentStore } from '@/store/agentStore';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { formatCount } from '@/utils/format';
-import type { Agent, AgentStatus } from '@/types/agent';
+import type { Agent, AgentStatus, AgentType } from '@/types/agent';
+
+/**
+ * Small "+ Create Agent" → Voice / Chat dropdown. Picking an option
+ * navigates to /agents/new?type=… so the builder skips the inline
+ * type picker in Basic Info. Closes on outside click + Escape.
+ */
+function CreateAgentDropdown({ variant = 'header' }: { variant?: 'header' | 'empty' }) {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  function pick(type: AgentType) {
+    setOpen(false);
+    navigate(`/agents/new?type=${type}`);
+  }
+
+  const triggerClass =
+    variant === 'header'
+      ? 'inline-flex items-center gap-1.5 rounded-md bg-cyan px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan/90'
+      : 'inline-flex items-center gap-2 rounded-md bg-cyan px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-cyan/90';
+
+  return (
+    <div ref={rootRef} className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={triggerClass}
+        data-testid={variant === 'header' ? 'create-agent-btn' : 'create-first-agent-btn'}
+      >
+        <Plus size={variant === 'header' ? 16 : 16} strokeWidth={2.5} />
+        {variant === 'header' ? 'Create Agent' : 'Create Your First Agent'}
+        <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-30 mt-1.5 w-52 overflow-hidden rounded-md border border-[#E5E7EB] bg-white shadow-lg"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => pick('voice')}
+            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-medium text-text-primary transition-colors hover:bg-cyan/5"
+            data-testid="create-voice-agent-option"
+          >
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-cyan/10 text-cyan">
+              <Phone size={14} />
+            </span>
+            Voice Agent
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => pick('chat')}
+            className="flex w-full items-center gap-2.5 border-t border-[#F3F4F6] px-3 py-2.5 text-left text-sm font-medium text-text-primary transition-colors hover:bg-cyan/5"
+            data-testid="create-chat-agent-option"
+          >
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-cyan/10 text-cyan">
+              <MessageSquare size={14} />
+            </span>
+            Chat Agent
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const STATUS_STYLES: Record<AgentStatus, { bg: string; text: string }> = {
   draft: { bg: 'bg-[#F3F4F6]', text: 'text-[#6B7280]' },
@@ -84,9 +170,6 @@ function AgentCard({ agent }: { agent: Agent }) {
       <div className="flex items-center gap-2 mt-4">
         <span className="text-xs text-text-secondary">Model:</span>
         <span className="text-xs font-medium text-text-primary">{config.model}</span>
-        <span className="text-xs text-text-secondary">•</span>
-        <span className="text-xs text-text-secondary">Use Case:</span>
-        <span className="text-xs font-medium text-text-primary capitalize">{config.useCase}</span>
       </div>
     </Link>
   );
@@ -106,14 +189,7 @@ function EmptyAgents() {
       <p className="text-sm text-text-secondary mb-6 max-w-md mx-auto">
         Create your first AI agent to automate voice calls, chat interactions, and more.
       </p>
-      <Link
-        to="/agents/new"
-        className="inline-flex items-center gap-2 rounded-md bg-cyan px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-cyan/90"
-        data-testid="create-first-agent-btn"
-      >
-        <Plus size={16} />
-        Create Your First Agent
-      </Link>
+      <CreateAgentDropdown variant="empty" />
     </div>
   );
 }
@@ -165,16 +241,7 @@ export function Agents() {
       <PageHeader
         title="Agents"
         subtitle="Build, test, and deploy AI agents for voice and chat"
-        actions={
-          <Link
-            to="/agents/new"
-            className="inline-flex items-center gap-1.5 rounded-md bg-cyan px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan/90"
-            data-testid="create-agent-btn"
-          >
-            <Plus size={16} strokeWidth={2.5} />
-            Create Agent
-          </Link>
-        }
+        actions={<CreateAgentDropdown variant="header" />}
       />
 
       {agents.length > 0 && (

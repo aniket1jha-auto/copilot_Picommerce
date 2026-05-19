@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { CampaignWizard, type CampaignData } from '@/components/campaign/CampaignWizard';
@@ -72,6 +72,15 @@ export function CreateCampaign() {
         <PageHeader
           title="Create campaign"
           subtitle="Pick how this campaign should run. You can start from a template once you're inside."
+          actions={
+            <Link
+              to="/campaigns/new"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-text-secondary transition-colors hover:border-[#D1D5DB] hover:text-text-primary"
+            >
+              <ArrowLeft size={13} />
+              Use Copilot instead
+            </Link>
+          }
         />
         <CampaignPathPicker onPick={pickPath} />
       </div>

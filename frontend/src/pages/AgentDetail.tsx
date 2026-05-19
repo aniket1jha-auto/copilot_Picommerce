@@ -187,7 +187,7 @@ export function AgentDetail() {
       </div>
 
       {/* Test Console */}
-      <TestConsole useCase={agent.config.useCase} seed={agent.id} />
+      <TestConsole useCase={agent.config.useCase ?? ''} seed={agent.id} />
 
       {/* Tabs */}
       <div className="border-b border-[#E5E7EB]">

@@ -14,9 +14,14 @@ interface Props {
   onSave: (config: Partial<AgentConfiguration>) => void;
   onNext: () => void;
   onPrev: () => void;
+  /**
+   * When rendered inline inside the unified Prompts & Instructions step,
+   * the wrapping page owns the wizard footer — suppress the local one.
+   */
+  hideFooter?: boolean;
 }
 
-export function ChannelIdentityChat({ config, onSave, onNext, onPrev }: Props) {
+export function ChannelIdentityChat({ config, onSave, onNext, onPrev, hideFooter = false }: Props) {
   const [channel, setChannel] = useState<ChatChannelId>(config.chatChannel ?? 'whatsapp');
   const [displayName, setDisplayName] = useState(config.chatDisplayName ?? '');
   const [languages, setLanguages] = useState<string[]>(() => {
@@ -229,22 +234,24 @@ export function ChannelIdentityChat({ config, onSave, onNext, onPrev }: Props) {
         </div>
       </div>
 
-      <div className="flex justify-between pt-4">
-        <button
-          type="button"
-          onClick={onPrev}
-          className="inline-flex items-center gap-2 rounded-md border border-[#E5E7EB] px-6 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-gray-50"
-        >
-          Back
-        </button>
-        <button
-          type="button"
-          onClick={handleNext}
-          className="inline-flex items-center gap-2 rounded-md bg-cyan px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-cyan/90"
-        >
-          Continue
-        </button>
-      </div>
+      {!hideFooter && (
+        <div className="flex justify-between pt-4">
+          <button
+            type="button"
+            onClick={onPrev}
+            className="inline-flex items-center gap-2 rounded-md border border-[#E5E7EB] px-6 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-gray-50"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={handleNext}
+            className="inline-flex items-center gap-2 rounded-md bg-cyan px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-cyan/90"
+          >
+            Continue
+          </button>
+        </div>
+      )}
     </div>
   );
 }

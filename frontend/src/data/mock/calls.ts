@@ -66,7 +66,7 @@ function pickAgentForScript(scriptId: string): { id: string; name: string } {
   if (!script) return { id: mockAgents[0].id, name: mockAgents[0].config.name };
 
   const match = mockAgents.find(
-    (a) => a.config.type === 'voice' && script.useCases.includes(a.config.useCase),
+    (a) => a.config.type === 'voice' && a.config.useCase && script.useCases.includes(a.config.useCase),
   );
   return match
     ? { id: match.id, name: match.config.name }

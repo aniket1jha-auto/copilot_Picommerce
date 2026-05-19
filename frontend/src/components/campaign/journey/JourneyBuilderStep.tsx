@@ -91,6 +91,12 @@ interface JourneyBuilderStepProps {
    * controls and doesn't want a duplicate bottom bar.
    */
   hideFooter?: boolean;
+  /**
+   * Suppress the "pick a pre-built journey vs start from scratch" overlay
+   * that auto-opens for blank journeys. The unified copilot builder lands
+   * straight on the entry node, so it sets this true.
+   */
+  hideStarter?: boolean;
 }
 
 function hasTrigger(nodes: JourneyFlowNode[]) {
@@ -122,6 +128,7 @@ function JourneyBuilderCanvas({
   onSaveDraft,
   isLastStep,
   hideFooter,
+  hideStarter,
 }: JourneyBuilderStepProps) {
   const journey = campaignData.journey;
   const { fitView, screenToFlowPosition, zoomIn, zoomOut } = useReactFlow();
@@ -132,7 +139,13 @@ function JourneyBuilderCanvas({
   const [showMiniMap, setShowMiniMap] = useState(false);
   const [validationOpen, setValidationOpen] = useState(false);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
-  const [starterOpen, setStarterOpen] = useState(() => isBlankJourney(campaignData.journey));
+  /**
+   * Node whose config drawer is open. Kept SEPARATE from React Flow's
+   * `selected` flag so the drawer only opens on a deliberate click —
+   * a mouse-down that becomes a drag should never open the panel.
+   */
+  const [panelNodeId, setPanelNodeId] = useState<string | null>(null);
+  const [starterOpen, setStarterOpen] = useState(() => !hideStarter && isBlankJourney(campaignData.journey));
   const [pendingFitView, setPendingFitView] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteCategory, setPaletteCategory] = useState<PaletteCategoryId | null>(null);
@@ -159,11 +172,22 @@ function JourneyBuilderCanvas({
     return n ?? null;
   }, [journey.nodes]);
 
+  /**
+   * The node whose config drawer is currently visible. Driven by
+   * `panelNodeId` (set by an explicit click), NOT by the React Flow
+   * `selected` flag — so dragging a node never pops the drawer open.
+   * If the node disappears from the graph, the panel collapses.
+   */
+  const panelNode = useMemo(() => {
+    if (!panelNodeId) return null;
+    return journey.nodes.find((n) => n.id === panelNodeId) ?? null;
+  }, [journey.nodes, panelNodeId]);
+
   // Right-edge slot is shared between the palette drawer and the config drawer.
-  // Config takes precedence — when a node is selected, close the palette automatically.
+  // Config takes precedence — when a node's panel is open, close the palette.
   useEffect(() => {
-    if (selectedNode) setPaletteOpen(false);
-  }, [selectedNode]);
+    if (panelNode) setPaletteOpen(false);
+  }, [panelNode]);
 
   const triggerPresent = hasTrigger(journey.nodes);
   const validation = useMemo(() => validateJourney(journey.nodes, journey.edges), [journey.nodes, journey.edges]);
@@ -280,6 +304,7 @@ function JourneyBuilderCanvas({
   );
 
   const closePanel = useCallback(() => {
+    setPanelNodeId(null);
     setJourney({
       nodes: journey.nodes.map((n) => ({ ...n, selected: false })),
       edges: journey.edges,
@@ -312,7 +337,7 @@ function JourneyBuilderCanvas({
     // Wait a tick to ensure ReactFlow has mounted and nodes are in the store.
     requestAnimationFrame(() => {
       try {
-        fitView({ padding: 0.2, duration: 300 });
+        fitView({ padding: 0.25, duration: 300, maxZoom: 1 });
       } finally {
         setPendingFitView(false);
       }
@@ -501,7 +526,7 @@ function JourneyBuilderCanvas({
 
   function openPalette(category: PaletteCategoryId) {
     // Right-edge slot is shared with config drawer — close the config when palette opens.
-    if (selectedNode) closePanel();
+    if (panelNode) closePanel();
     setPaletteCategory(category);
     setPaletteOpen(true);
   }
@@ -518,6 +543,8 @@ function JourneyBuilderCanvas({
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeContextMenu={onNodeContextMenu}
+            onNodeClick={(_, node) => setPanelNodeId(node.id)}
+            onNodeDragStart={() => setPanelNodeId(null)}
             onPaneClick={() => {
               setCtxMenu(null);
               closePanel();
@@ -528,6 +555,13 @@ function JourneyBuilderCanvas({
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
+            // Clamp the auto-fit zoom so a single-node journey (the
+            // landing state of the unified builder) doesn't blow the
+            // Entry node up to fill the canvas. Real nodes render at
+            // their intrinsic ~200px width.
+            fitViewOptions={{ maxZoom: 1, padding: 0.25 }}
+            minZoom={0.25}
+            maxZoom={1.5}
             proOptions={{ hideAttribution: true }}
             defaultEdgeOptions={{
               type: 'journeyBezier',
@@ -646,14 +680,14 @@ function JourneyBuilderCanvas({
             onAddNode={() => openPalette(paletteCategory ?? 'messaging')}
             onZoomIn={() => zoomIn({ duration: 200 })}
             onZoomOut={() => zoomOut({ duration: 200 })}
-            onFitView={() => fitView({ padding: 0.2, duration: 280 })}
+            onFitView={() => fitView({ padding: 0.25, duration: 280, maxZoom: 1 })}
             onToggleMinimap={() => setShowMiniMap((m) => !m)}
             onShowShortcuts={() => setShortcutsOpen((v) => !v)}
           />
 
           {/* Shortcuts popover (anchored bottom-left, above the floating cluster) */}
           {shortcutsOpen && (
-            <div className="absolute bottom-4 left-[124px] z-30 w-[280px] rounded-md border border-border-subtle bg-surface p-3 shadow-[var(--shadow-popover)]">
+            <div className="absolute bottom-4 left-[60px] z-30 w-[280px] rounded-md border border-border-subtle bg-surface p-3 shadow-[var(--shadow-popover)]">
               <div className="flex items-center justify-between">
                 <p className="text-[12px] font-semibold text-text-primary">Keyboard shortcuts</p>
                 <button
@@ -795,9 +829,11 @@ function JourneyBuilderCanvas({
           )}
         </div>
 
-        {/* Right-side config panel — keeps its existing width-transition behavior */}
+        {/* Right-side config panel — keeps its existing width-transition behavior.
+            Driven by `panelNode` (explicit click), not by the React Flow selected
+            flag, so dragging never pops the drawer open. */}
         <JourneyNodeConfigPanel
-          node={selectedNode}
+          node={panelNode}
           onClose={closePanel}
           onPatch={onPatchNode}
           audienceSize={audienceSize}

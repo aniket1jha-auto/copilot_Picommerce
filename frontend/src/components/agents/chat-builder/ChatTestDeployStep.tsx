@@ -120,7 +120,7 @@ export function ChatTestDeployStep({ config, onPrev, onDeploy }: Props) {
               </li>
               <li>
                 <span className="text-text-secondary">Use Case:</span>{' '}
-                {chatUseCaseLabel(config.useCase)}
+                {chatUseCaseLabel(config.useCase ?? '')}
               </li>
               <li>
                 <span className="text-text-secondary">Language:</span> {langs || '—'}

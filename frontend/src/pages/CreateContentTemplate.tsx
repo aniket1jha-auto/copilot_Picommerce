@@ -23,6 +23,33 @@ const LANG_OPTIONS = [
 
 const BODY_MAX = 1024;
 const HEADER_TEXT_MAX = 60;
+const FOOTER_TEXT_MAX = 60;
+const QUICK_REPLY_MAX = 25;
+const CTA_LABEL_MAX = 25;
+const QUICK_REPLY_LIMIT = 3;
+const CTA_LIMIT = 2;
+
+/** Header type — matches Meta WhatsApp Cloud API HEADER component formats. */
+type HeaderType = 'none' | 'text' | 'image' | 'video' | 'document';
+
+/** Buttons type — matches Meta WhatsApp Cloud API BUTTONS component. */
+type ButtonsKind = 'none' | 'quick_reply' | 'cta';
+
+interface QuickReplyButton {
+  id: string;
+  label: string;
+}
+
+interface CtaButton {
+  id: string;
+  kind: 'url' | 'phone';
+  label: string;
+  value: string; // url or phone depending on kind
+}
+
+function newButtonId(): string {
+  return `btn-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
 
 function emptyMedia(): TemplateMediaSelection {
   return { assetId: null, fileName: null, previewUrl: null };
@@ -124,13 +151,30 @@ export function CreateContentTemplate() {
   const [language, setLanguage] = useState<string>('English');
   const [category, setCategory] = useState<TemplateCategory>('utility');
 
-  const [headerEnabled, setHeaderEnabled] = useState(false);
-  const [headerType, setHeaderType] = useState<'text' | 'image' | 'video' | 'document'>('text');
+  /**
+   * Meta-style header — one dropdown with five values (none / text / image /
+   * video / document). Replaces the old "Add header" checkbox + sub-radio
+   * combo so the choice is visible upfront and matches WhatsApp Cloud API.
+   */
+  const [headerType, setHeaderType] = useState<HeaderType>('none');
   const [headerText, setHeaderText] = useState('');
   const [headerMedia, setHeaderMedia] = useState<TemplateMediaSelection>(emptyMedia);
   const [rcsRichImage, setRcsRichImage] = useState<TemplateMediaSelection>(emptyMedia);
 
+  // Body
   const [body, setBody] = useState('');
+
+  // Footer — plain text, no variables (Meta restriction).
+  const [footerEnabled, setFooterEnabled] = useState(false);
+  const [footerText, setFooterText] = useState('');
+
+  // Buttons — Meta allows up to 10 buttons total; we keep it pragmatic:
+  // up to 3 quick replies OR up to 2 call-to-action buttons.
+  const [buttonsKind, setButtonsKind] = useState<ButtonsKind>('none');
+  const [quickReplies, setQuickReplies] = useState<QuickReplyButton[]>([]);
+  const [ctaButtons, setCtaButtons] = useState<CtaButton[]>([]);
+
+  const headerEnabled = headerType !== 'none';
   const [sidebarTab, setSidebarTab] = useState<'preview' | 'ai'>('preview');
 
   // ─── AI Assist local UI state ───────────────────────────────────────────────
@@ -152,7 +196,6 @@ export function CreateContentTemplate() {
     const f = files.find((x) => x.id === id);
     if (f) {
       setChannel('whatsapp');
-      setHeaderEnabled(true);
       if (f.kind === 'image') setHeaderType('image');
       else if (f.kind === 'video') setHeaderType('video');
       else if (f.kind === 'document') setHeaderType('document');
@@ -531,82 +574,77 @@ export function CreateContentTemplate() {
 
             {channel === 'whatsapp' && (
               <div className="space-y-4 border-b border-[#F3F4F6] pb-6">
-                <label className="flex cursor-pointer items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={headerEnabled}
-                    onChange={(e) => setHeaderEnabled(e.target.checked)}
-                    className="rounded border-[#E5E7EB] text-cyan focus:ring-cyan"
-                  />
-                  <span className="text-sm font-medium text-text-primary">Add header</span>
-                </label>
-                {headerEnabled && (
-                  <div className="space-y-4 pl-6">
-                    <div className="flex flex-wrap gap-3">
-                      {(['text', 'image', 'video', 'document'] as const).map((t) => (
-                        <label
-                          key={t}
-                          className={[
-                            'flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm',
-                            headerType === t
-                              ? 'border-cyan bg-cyan/5 text-text-primary'
-                              : 'border-[#E5E7EB] text-text-secondary',
-                          ].join(' ')}
-                        >
-                          <input
-                            type="radio"
-                            name="header-type"
-                            checked={headerType === t}
-                            onChange={() => {
-                              setHeaderType(t);
-                              setHeaderMedia(emptyMedia());
-                            }}
-                            className="text-cyan focus:ring-cyan"
-                          />
-                          <span className="capitalize">{t}</span>
-                        </label>
-                      ))}
+                {/* Header — Meta-style dropdown. Five values mirror the
+                    WhatsApp Cloud API HEADER component formats. */}
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="wa-header-type"
+                    className="text-sm font-medium text-text-primary"
+                  >
+                    Header
+                  </label>
+                  <select
+                    id="wa-header-type"
+                    value={headerType}
+                    onChange={(e) => {
+                      setHeaderType(e.target.value as HeaderType);
+                      setHeaderMedia(emptyMedia());
+                    }}
+                    className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20 sm:max-w-xs"
+                  >
+                    <option value="none">None — body only</option>
+                    <option value="text">Text</option>
+                    <option value="image">Image</option>
+                    <option value="video">Video</option>
+                    <option value="document">Document</option>
+                  </select>
+                  <p className="text-[11px] text-text-secondary">
+                    Optional. Adds a prominent block at the top of the message — text, an image,
+                    a short video, or a document.
+                  </p>
+                </div>
+
+                {headerType === 'text' && (
+                  <div>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-xs font-medium text-text-secondary">Header text</span>
+                      <span className="text-xs text-text-secondary">
+                        {headerText.length}/{HEADER_TEXT_MAX}
+                      </span>
                     </div>
-                    {headerType === 'text' ? (
-                      <div>
-                        <div className="mb-1 flex items-center justify-between">
-                          <span className="text-xs font-medium text-text-secondary">Header text</span>
-                          <span className="text-xs text-text-secondary">
-                            {headerText.length}/{HEADER_TEXT_MAX}
-                          </span>
-                        </div>
-                        <input
-                          ref={headerTextRef}
-                          type="text"
-                          maxLength={HEADER_TEXT_MAX}
-                          value={headerText}
-                          onChange={(e) => setHeaderText(e.target.value)}
-                          className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
-                        />
-                        <button
-                          type="button"
-                          onClick={addVarToHeader}
-                          className="mt-2 text-xs font-medium text-cyan hover:underline"
-                        >
-                          + Add variable
-                        </button>
-                      </div>
-                    ) : (
-                      <TemplateMediaField
-                        title={
-                          headerType === 'image'
-                            ? 'Header image'
-                            : headerType === 'video'
-                              ? 'Header video'
-                              : 'Header document'
-                        }
-                        role={mediaRoleForHeader(headerType)}
-                        helpChannel="whatsapp"
-                        value={headerMedia}
-                        onChange={setHeaderMedia}
-                      />
-                    )}
+                    <input
+                      ref={headerTextRef}
+                      type="text"
+                      maxLength={HEADER_TEXT_MAX}
+                      value={headerText}
+                      onChange={(e) => setHeaderText(e.target.value)}
+                      className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
+                    />
+                    <button
+                      type="button"
+                      onClick={addVarToHeader}
+                      className="mt-2 text-xs font-medium text-cyan hover:underline"
+                    >
+                      + Add variable
+                    </button>
                   </div>
+                )}
+                {(headerType === 'image' ||
+                  headerType === 'video' ||
+                  headerType === 'document') && (
+                  <TemplateMediaField
+                    title={
+                      headerType === 'image'
+                        ? 'Header image'
+                        : headerType === 'video'
+                          ? 'Header video'
+                          : 'Header document'
+                    }
+                    role={mediaRoleForHeader(headerType)}
+                    helpChannel="whatsapp"
+                    value={headerMedia}
+                    onChange={setHeaderMedia}
+                  />
                 )}
               </div>
             )}
@@ -665,6 +703,239 @@ export function CreateContentTemplate() {
                 </div>
               )}
             </div>
+
+            {/* Footer + Buttons — WhatsApp only (parity with Meta's Cloud API
+                template components: HEADER, BODY, FOOTER, BUTTONS). */}
+            {channel === 'whatsapp' && (
+              <>
+                {/* Footer */}
+                <div className="border-t border-[#F3F4F6] pt-6">
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={footerEnabled}
+                      onChange={(e) => {
+                        setFooterEnabled(e.target.checked);
+                        if (!e.target.checked) setFooterText('');
+                      }}
+                      className="rounded border-[#E5E7EB] text-cyan focus:ring-cyan"
+                    />
+                    <span className="text-sm font-medium text-text-primary">Add footer</span>
+                    <span className="text-[11px] text-text-tertiary">
+                      Short plain-text disclaimer, no variables
+                    </span>
+                  </label>
+                  {footerEnabled && (
+                    <div className="mt-3 pl-6">
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="text-xs font-medium text-text-secondary">Footer text</span>
+                        <span className="text-xs text-text-secondary">
+                          {footerText.length}/{FOOTER_TEXT_MAX}
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        maxLength={FOOTER_TEXT_MAX}
+                        value={footerText}
+                        onChange={(e) => setFooterText(e.target.value)}
+                        placeholder="e.g., Reply STOP to opt out"
+                        className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Buttons */}
+                <div className="border-t border-[#F3F4F6] pt-6">
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="wa-buttons-kind"
+                      className="text-sm font-medium text-text-primary"
+                    >
+                      Buttons
+                    </label>
+                    <select
+                      id="wa-buttons-kind"
+                      value={buttonsKind}
+                      onChange={(e) => {
+                        const next = e.target.value as ButtonsKind;
+                        setButtonsKind(next);
+                        if (next === 'none') {
+                          setQuickReplies([]);
+                          setCtaButtons([]);
+                        } else if (next === 'quick_reply') {
+                          setCtaButtons([]);
+                          setQuickReplies((prev) =>
+                            prev.length > 0
+                              ? prev
+                              : [{ id: newButtonId(), label: '' }],
+                          );
+                        } else {
+                          setQuickReplies([]);
+                          setCtaButtons((prev) =>
+                            prev.length > 0
+                              ? prev
+                              : [{ id: newButtonId(), kind: 'url', label: '', value: '' }],
+                          );
+                        }
+                      }}
+                      className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20 sm:max-w-xs"
+                    >
+                      <option value="none">None</option>
+                      <option value="quick_reply">Quick reply (up to {QUICK_REPLY_LIMIT})</option>
+                      <option value="cta">Call-to-action (up to {CTA_LIMIT})</option>
+                    </select>
+                    <p className="text-[11px] text-text-secondary">
+                      {buttonsKind === 'none' && 'Optional. Add tap-targets at the bottom of the message.'}
+                      {buttonsKind === 'quick_reply' &&
+                        'Recipients can tap a label to send a canned reply back to your bot.'}
+                      {buttonsKind === 'cta' &&
+                        'A "Call-to-action" launches the recipient out — open a URL or dial a number.'}
+                    </p>
+                  </div>
+
+                  {buttonsKind === 'quick_reply' && (
+                    <div className="mt-4 space-y-2 pl-6">
+                      {quickReplies.map((b, idx) => (
+                        <div key={b.id} className="flex items-center gap-2">
+                          <span className="w-12 shrink-0 text-[11px] font-medium text-text-tertiary">
+                            #{idx + 1}
+                          </span>
+                          <input
+                            type="text"
+                            maxLength={QUICK_REPLY_MAX}
+                            value={b.label}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setQuickReplies((prev) =>
+                                prev.map((q) => (q.id === b.id ? { ...q, label: v } : q)),
+                              );
+                            }}
+                            placeholder="e.g., Yes, I'm interested"
+                            className="flex-1 rounded-md border border-[#E5E7EB] px-3 py-1.5 text-sm focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
+                          />
+                          <span className="w-12 shrink-0 text-right text-[11px] text-text-tertiary tabular-nums">
+                            {b.label.length}/{QUICK_REPLY_MAX}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setQuickReplies((prev) => prev.filter((q) => q.id !== b.id))
+                            }
+                            aria-label="Remove button"
+                            className="rounded-md p-1 text-text-tertiary hover:bg-red-50 hover:text-red-600"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                      {quickReplies.length < QUICK_REPLY_LIMIT && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setQuickReplies((prev) => [
+                              ...prev,
+                              { id: newButtonId(), label: '' },
+                            ])
+                          }
+                          className="text-xs font-medium text-cyan hover:underline"
+                        >
+                          + Add quick reply ({quickReplies.length}/{QUICK_REPLY_LIMIT})
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {buttonsKind === 'cta' && (
+                    <div className="mt-4 space-y-3 pl-6">
+                      {ctaButtons.map((b, idx) => (
+                        <div
+                          key={b.id}
+                          className="rounded-md border border-[#E5E7EB] bg-[#F9FAFB] p-3"
+                        >
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-medium text-text-tertiary">
+                              Button #{idx + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setCtaButtons((prev) => prev.filter((c) => c.id !== b.id))
+                              }
+                              aria-label="Remove button"
+                              className="rounded-md p-1 text-text-tertiary hover:bg-red-50 hover:text-red-600"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[120px_1fr]">
+                            <select
+                              value={b.kind}
+                              onChange={(e) => {
+                                const k = e.target.value as 'url' | 'phone';
+                                setCtaButtons((prev) =>
+                                  prev.map((c) =>
+                                    c.id === b.id ? { ...c, kind: k, value: '' } : c,
+                                  ),
+                                );
+                              }}
+                              className="rounded-md border border-[#E5E7EB] bg-white px-2 py-1.5 text-sm"
+                            >
+                              <option value="url">Open URL</option>
+                              <option value="phone">Call number</option>
+                            </select>
+                            <input
+                              type="text"
+                              maxLength={CTA_LABEL_MAX}
+                              value={b.label}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setCtaButtons((prev) =>
+                                  prev.map((c) => (c.id === b.id ? { ...c, label: v } : c)),
+                                );
+                              }}
+                              placeholder="Button label"
+                              className="rounded-md border border-[#E5E7EB] bg-white px-2 py-1.5 text-sm"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            value={b.value}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setCtaButtons((prev) =>
+                                prev.map((c) => (c.id === b.id ? { ...c, value: v } : c)),
+                              );
+                            }}
+                            placeholder={
+                              b.kind === 'url' ? 'https://example.com/landing' : '+91 98765 43210'
+                            }
+                            className="mt-2 w-full rounded-md border border-[#E5E7EB] bg-white px-2 py-1.5 text-sm"
+                          />
+                          <p className="mt-1 text-[10.5px] text-text-tertiary">
+                            {b.label.length}/{CTA_LABEL_MAX} characters in label
+                          </p>
+                        </div>
+                      ))}
+                      {ctaButtons.length < CTA_LIMIT && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCtaButtons((prev) => [
+                              ...prev,
+                              { id: newButtonId(), kind: 'url', label: '', value: '' },
+                            ])
+                          }
+                          className="text-xs font-medium text-cyan hover:underline"
+                        >
+                          + Add call-to-action ({ctaButtons.length}/{CTA_LIMIT})
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </section>
         </div>
 

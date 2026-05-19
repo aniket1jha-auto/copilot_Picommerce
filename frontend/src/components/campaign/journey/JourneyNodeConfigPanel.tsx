@@ -3,6 +3,7 @@
 import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useAgentStore } from '@/store/agentStore';
+import { usePhaseData } from '@/hooks/usePhaseData';
 import { MOCK_CONTENT_TEMPLATES } from '@/data/mock/contentLibraryTemplates';
 import type { ContentTemplateRow } from '@/types/contentLibrary';
 import type {
@@ -72,14 +73,16 @@ interface JourneyNodeConfigPanelProps {
 
 export function JourneyNodeConfigPanel({ node, onClose, onPatch, audienceSize = 10_000 }: JourneyNodeConfigPanelProps) {
   const agents = useAgentStore((s) => s.agents);
+  const { segments } = usePhaseData();
   const deployedVoice = agents.filter((a) => a.config.type === 'voice' && a.status === 'deployed');
   const deployedChat = agents.filter((a) => a.config.type === 'chat' && a.status === 'deployed');
 
-  if (!node) {
-    return (
-      <aside className="h-full w-0 shrink-0 overflow-hidden border-l border-transparent bg-surface transition-[width] duration-300" />
-    );
-  }
+  // No node selected → render nothing. Previously we kept a `w-0`
+  // placeholder to animate the slide-in transition, but that stub
+  // still rendered a white `bg-surface` sliver inside the canvas
+  // card on some layouts. We accept losing the slide animation
+  // in exchange for a clean empty state.
+  if (!node) return null;
 
   const d = node.data as unknown as JourneyNodeData;
   const patch = (p: Partial<JourneyNodeData>) => onPatch(node.id, mergeJourneyNodeData(d, p));
@@ -115,6 +118,83 @@ export function JourneyNodeConfigPanel({ node, onClose, onPatch, audienceSize = 
 
         {d.kind === 'entry_trigger' && (
           <>
+            <Section title="Audience">
+              <p className="mb-2 text-[11px] leading-snug text-text-secondary">
+                Pick the segment that enters this journey. Create new segments in Audiences.
+              </p>
+              <select
+                value={(d as EntryTriggerNodeData).audienceId ?? ''}
+                onChange={(e) => {
+                  const segId = e.target.value || undefined;
+                  const seg = segments.find((s) => s.id === segId);
+                  patch({
+                    audienceId: segId,
+                    audienceName: seg?.name,
+                    audienceSize: seg?.size,
+                  } as Partial<EntryTriggerNodeData>);
+                }}
+                className="w-full rounded-md border border-[#E5E7EB] bg-white px-2 py-2 text-sm"
+              >
+                <option value="">Select audience…</option>
+                {segments.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} — {s.size.toLocaleString()} contacts
+                  </option>
+                ))}
+              </select>
+              {(d as EntryTriggerNodeData).audienceId && (
+                <p className="mt-1.5 text-[11px] text-text-secondary">
+                  Estimated reach: {((d as EntryTriggerNodeData).audienceSize ?? 0).toLocaleString()} contacts
+                </p>
+              )}
+              <Link to="/audiences" className="mt-2 inline-block text-xs font-medium text-cyan hover:underline">
+                Manage segments →
+              </Link>
+            </Section>
+            <Section title="Schedule mode">
+              <p className="mb-2 text-[11px] leading-snug text-text-secondary">
+                Decide when contacts in this audience enter the journey.
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {(
+                  [
+                    { id: 'smart_ai', label: 'Smart + AI', hint: 'Best time per contact' },
+                    { id: 'recurring', label: 'Recurring', hint: 'Daily / weekly / monthly' },
+                    { id: 'one-time', label: 'One time', hint: 'Run once on a date' },
+                    { id: 'event', label: 'Event-based', hint: 'On a behavioral event' },
+                  ] as const
+                ).map((opt) => {
+                  const active = ((d as EntryTriggerNodeData).scheduleMode ?? 'one-time') === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        // Keep legacy `when` in sync so existing wizards/preview still work.
+                        const whenMap: Record<typeof opt.id, EntryTriggerNodeData['when']> = {
+                          'smart_ai': 'campaign_start',
+                          'one-time': 'campaign_start',
+                          'recurring': 'recurring',
+                          'event': 'behavioral_event',
+                        };
+                        patch({
+                          scheduleMode: opt.id,
+                          when: whenMap[opt.id],
+                        } as Partial<EntryTriggerNodeData>);
+                      }}
+                      className={`flex flex-col items-start gap-0.5 rounded-md border px-2.5 py-1.5 text-left transition-colors ${
+                        active
+                          ? 'border-cyan bg-cyan/5 text-text-primary'
+                          : 'border-[#E5E7EB] bg-white text-text-secondary hover:border-[#D1D5DB] hover:text-text-primary'
+                      }`}
+                    >
+                      <span className="text-[12.5px] font-medium">{opt.label}</span>
+                      <span className="text-[10.5px] text-text-tertiary">{opt.hint}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </Section>
             <Section title="When users enter">
               <p className="mb-2 text-[11px] leading-snug text-text-secondary">
                 Schedule for this journey is defined here (not in a separate wizard step).
@@ -233,7 +313,8 @@ export function JourneyNodeConfigPanel({ node, onClose, onPatch, audienceSize = 
                 <option value="">Select voice agent…</option>
                 {deployedVoice.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.config.name} — {a.config.useCase} — {a.config.conversationSettings.language}
+                    {a.config.name}
+                    {a.config.useCase ? ` — ${a.config.useCase}` : ''} — {a.config.conversationSettings.language}
                   </option>
                 ))}
               </select>
@@ -379,7 +460,8 @@ export function JourneyNodeConfigPanel({ node, onClose, onPatch, audienceSize = 
                 <option value="">Select chat agent…</option>
                 {deployedChat.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.config.name} — {a.config.chatChannel ?? 'whatsapp'} — {a.config.useCase}
+                    {a.config.name} — {a.config.chatChannel ?? 'whatsapp'}
+                    {a.config.useCase ? ` — ${a.config.useCase}` : ''}
                   </option>
                 ))}
               </select>

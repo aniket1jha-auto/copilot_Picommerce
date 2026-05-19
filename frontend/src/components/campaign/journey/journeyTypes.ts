@@ -45,7 +45,7 @@ export interface JourneyMessagingEditorFields {
 
 export interface EntryTriggerNodeData extends JourneyNodeBase {
   kind: 'entry_trigger';
-  /** When users enter the journey */
+  /** Legacy schedule kind (kept for back-compat with older journeys). */
   when: 'campaign_start' | 'behavioral_event' | 'recurring';
   startDate: string;
   startTime: string;
@@ -53,6 +53,15 @@ export interface EntryTriggerNodeData extends JourneyNodeBase {
   recurringFrequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
   recurringDay: string;
   recurringTime: string;
+  /**
+   * Phase A of the unified-builder pivot: audience + canonical schedule
+   * mode live on the entry node. The right-pane wizard step is being
+   * retired in favour of clicking the Entry node on the canvas.
+   */
+  audienceId?: string;
+  audienceName?: string;
+  audienceSize?: number;
+  scheduleMode?: 'one-time' | 'recurring' | 'event' | 'smart_ai';
 }
 
 export interface VoiceAgentNodeData extends JourneyNodeBase {

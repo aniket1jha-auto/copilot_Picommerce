@@ -4,7 +4,7 @@ import { Dashboard } from '@/pages/Dashboard';
 
 import { Campaigns } from '@/pages/Campaigns';
 import { CreateCampaign } from '@/pages/CreateCampaign';
-import { CampaignCopilotChat } from '@/pages/CampaignCopilotChat';
+import { CampaignBuilder } from '@/pages/CampaignBuilder';
 import { CampaignCopilotReview } from '@/pages/CampaignCopilotReview';
 import { CampaignDetail } from '@/pages/CampaignDetail';
 import { CampaignFlow } from '@/pages/CampaignFlow';
@@ -14,6 +14,9 @@ import { Agents } from '@/pages/Agents';
 import { AgentBuilder } from '@/pages/AgentBuilder';
 import { ChatAgentBuilder } from '@/pages/ChatAgentBuilder';
 import { AgentDetail } from '@/pages/AgentDetail';
+
+import { KnowledgeBaseList } from '@/pages/KnowledgeBaseList';
+import { KnowledgeBaseDetail } from '@/pages/KnowledgeBaseDetail';
 
 import { Tools } from '@/pages/Tools';
 
@@ -28,8 +31,13 @@ import { CreateContentTemplate } from '@/pages/CreateContentTemplate';
 import { Monitoring } from '@/pages/Monitoring';
 import { CallLogs } from '@/pages/CallLogs';
 import { CallDetail } from '@/pages/CallDetail';
-import { Analytics } from '@/pages/Analytics';
 import { Reports } from '@/pages/Reports';
+
+// OBSERVE restructure (Phase 4)
+import { Performance } from '@/pages/observe/Performance';
+import { Channels as ObserveChannels } from '@/pages/observe/Channels';
+import { Reporting } from '@/pages/observe/Reporting';
+import { ReportingDashboard } from '@/pages/observe/ReportingDashboard';
 
 import { ChannelConfig } from '@/pages/ChannelConfig';
 import { Integrations } from '@/pages/Integrations';
@@ -52,8 +60,11 @@ export function AppRoutes() {
 
       {/* BUILD — Campaigns (first per ADR 0002) */}
       <Route path="/campaigns" element={<Campaigns />} />
-      <Route path="/campaigns/new" element={<CreateCampaign />} />
-      <Route path="/campaigns/copilot" element={<CampaignCopilotChat />} />
+      {/* Unified copilot-first builder. Manual wizard lives at /new/manual. */}
+      <Route path="/campaigns/new" element={<CampaignBuilder />} />
+      <Route path="/campaigns/new/manual" element={<CreateCampaign />} />
+      {/* Legacy redirect — anyone with a /campaigns/copilot bookmark lands on the new builder. */}
+      <Route path="/campaigns/copilot" element={<Navigate to="/campaigns/new" replace />} />
       <Route path="/campaigns/copilot/review" element={<CampaignCopilotReview />} />
       <Route path="/campaigns/:id" element={<CampaignDetail />} />
       <Route path="/campaigns/:id/flow" element={<CampaignFlow />} />
@@ -65,6 +76,10 @@ export function AppRoutes() {
       <Route path="/agents/new/chat" element={<ChatAgentBuilder />} />
       <Route path="/agents/:id/edit" element={<AgentBuilder mode="edit" />} />
       <Route path="/agents/:id" element={<AgentDetail />} />
+
+      {/* BUILD — Knowledge Base (Central RAG) */}
+      <Route path="/knowledge-base" element={<KnowledgeBaseList />} />
+      <Route path="/knowledge-base/:id" element={<KnowledgeBaseDetail />} />
 
       {/* BUILD — Tools */}
       <Route path="/tools" element={<Tools />} />
@@ -85,7 +100,15 @@ export function AppRoutes() {
       <Route path="/monitoring" element={<Monitoring />} />
       <Route path="/monitoring/calls" element={<CallLogs />} />
       <Route path="/monitoring/calls/:id" element={<CallDetail />} />
-      <Route path="/analytics" element={<Analytics />} />
+
+      {/* OBSERVE restructure — Performance / Channels / Reporting */}
+      <Route path="/observe/performance" element={<Performance />} />
+      <Route path="/observe/channels" element={<ObserveChannels />} />
+      <Route path="/observe/reporting" element={<Reporting />} />
+      <Route path="/observe/reporting/:id" element={<ReportingDashboard />} />
+
+      {/* Legacy single-page redirects — keep one phase, then remove */}
+      <Route path="/analytics" element={<Navigate to="/observe/channels" replace />} />
       <Route path="/reports" element={<Reports />} />
 
       {/* CONFIGURE */}

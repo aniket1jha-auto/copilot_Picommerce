@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Megaphone,
-  Plus,
   X,
   ChevronDown,
   Filter as FilterIcon,
@@ -184,22 +183,13 @@ export function Campaigns() {
         title="Campaigns"
         subtitle={!showEmptyAtAll ? subtitle : undefined}
         actions={
-          <div className="flex items-center gap-2">
-            <Link
-              to="/campaigns/copilot"
-              className="group relative inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-cyan to-purple-500 px-3.5 py-2 text-sm font-medium text-white shadow-[0_4px_12px_-4px_rgba(34,179,229,0.5)] transition-shadow hover:shadow-[0_6px_16px_-4px_rgba(34,179,229,0.65)]"
-            >
-              <Sparkles size={15} strokeWidth={2.2} />
-              Campaign Copilot
-            </Link>
-            <Link
-              to="/campaigns/new"
-              className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3.5 py-2 text-sm font-medium text-text-on-accent transition-colors hover:bg-accent-hover"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-              New campaign
-            </Link>
-          </div>
+          <Link
+            to="/campaigns/new"
+            className="group relative inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-cyan to-purple-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_4px_12px_-4px_rgba(34,179,229,0.5)] transition-shadow hover:shadow-[0_6px_16px_-4px_rgba(34,179,229,0.65)]"
+          >
+            <Sparkles size={15} strokeWidth={2.2} />
+            New campaign
+          </Link>
         }
       />
 

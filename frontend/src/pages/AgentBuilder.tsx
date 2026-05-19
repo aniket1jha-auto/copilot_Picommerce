@@ -1,31 +1,31 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Check } from 'lucide-react';
+import type { AgentType } from '@/types/agent';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { BasicInfoStep } from '@/components/agents/builder/BasicInfoStep';
-import { ModelVoiceStep } from '@/components/agents/builder/ModelVoiceStep';
-import { PromptStep } from '@/components/agents/builder/PromptStep';
-import { InstructionsStep } from '@/components/agents/builder/InstructionsStep';
-import { AdvancedStep } from '@/components/agents/builder/AdvancedStep';
+import { PromptsAndInstructionsStep } from '@/components/agents/builder/PromptsAndInstructionsStep';
 import { ReviewStep } from '@/components/agents/builder/ReviewStep';
 import { useAgentStore } from '@/store/agentStore';
 import { useToast } from '@/components/ui';
 import type { AgentConfiguration } from '@/types/agent';
 
+/**
+ * Three-step unified agent builder. The middle step folds in System
+ * Prompt, Instructions, Knowledge attachment, Voice, and Advanced —
+ * laid out as one scrolling page with collapsible sections. See
+ * PromptsAndInstructionsStep for the section order.
+ */
 const STEPS = [
   { id: 1, name: 'Basic Info', component: BasicInfoStep },
-  { id: 2, name: 'Voice', component: ModelVoiceStep },
-  { id: 3, name: 'System Prompt', component: PromptStep },
-  { id: 4, name: 'Instructions', component: InstructionsStep },
-  { id: 5, name: 'Advanced Settings', component: AdvancedStep },
-  { id: 6, name: 'Review & Deploy', component: ReviewStep },
+  { id: 2, name: 'Prompts & Instructions', component: PromptsAndInstructionsStep },
+  { id: 3, name: 'Review & Deploy', component: ReviewStep },
 ];
 
 const DEFAULT_CONFIG: AgentConfiguration = {
   name: '',
   description: '',
   type: 'voice',
-  useCase: 'sales',
   model: 'gpt-realtime-mini',
   voice: 'coral',
   systemPrompt: '',
@@ -111,6 +111,7 @@ interface AgentBuilderProps {
 
 export function AgentBuilder({ mode = 'create' }: AgentBuilderProps) {
   const { id: agentId } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const createAgent = useAgentStore((s) => s.createAgent);
@@ -119,9 +120,20 @@ export function AgentBuilder({ mode = 'create' }: AgentBuilderProps) {
 
   const existingAgent = mode === 'edit' && agentId ? getAgentById(agentId) : undefined;
 
+  /**
+   * On /agents/new the Agents-page dropdown sends us here with
+   * ?type=voice|chat — pre-seed the config so the Basic Info step
+   * doesn't need to ask again. Anything else falls back to the
+   * default ("voice").
+   */
+  const initialType = useMemo<AgentType>(() => {
+    const raw = searchParams.get('type');
+    return raw === 'chat' ? 'chat' : 'voice';
+  }, [searchParams]);
+
   const [currentStep, setCurrentStep] = useState(1);
   const [config, setConfig] = useState<AgentConfiguration>(
-    () => existingAgent?.config ?? DEFAULT_CONFIG,
+    () => existingAgent?.config ?? { ...DEFAULT_CONFIG, type: initialType },
   );
 
   // If the agent is loaded asynchronously (edge case during HMR), sync it in.
@@ -162,17 +174,10 @@ export function AgentBuilder({ mode = 'create' }: AgentBuilderProps) {
     setConfig((prev) => ({ ...prev, ...stepConfig }));
   };
 
-  const stepIndicatorLabels = useMemo(() => {
-    const agentType = config.type;
-    return [
-      'Basic Info',
-      agentType === 'chat' ? 'Channel & Identity' : 'Voice',
-      'System Prompt',
-      'Instructions',
-      'Advanced Settings',
-      'Review & Deploy',
-    ];
-  }, [config.type]);
+  const stepIndicatorLabels = useMemo(
+    () => ['Basic Info', 'Prompts & Instructions', 'Review & Deploy'],
+    [],
+  );
 
   const handleDeploy = () => {
     if (mode === 'edit' && existingAgent) {

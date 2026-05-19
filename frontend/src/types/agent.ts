@@ -82,7 +82,13 @@ export interface AgentConfiguration {
   name: string;
   description: string;
   type: AgentType;
-  useCase: string;
+  /**
+   * @deprecated Phase 1 of the agent-builder simplification removed the
+   * Use Case picker from Basic Info. New agents created via the unified
+   * builder won't set this. Kept optional for legacy mock agents and
+   * orphaned chat-builder code paths that still reference it.
+   */
+  useCase?: string;
   templateId?: string;
 
   // Step 2: Model & Voice

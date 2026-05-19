@@ -2,7 +2,7 @@ import { Check, AlertCircle } from 'lucide-react';
 import type { AgentConfiguration } from '@/types/agent';
 import { ChatTestPanel } from '@/components/agents/chat-builder/ChatTestPanel';
 import { TestConsole } from '@/components/agents/evaluate/TestConsole';
-import { chatChannelLabel, chatUseCaseLabel } from '@/data/chatAgentConstants';
+import { chatChannelLabel } from '@/data/chatAgentConstants';
 
 interface Props {
   config: AgentConfiguration;
@@ -76,14 +76,6 @@ function ConfigurationSummary({ config }: { config: AgentConfiguration }) {
           </>
         )}
         <div className="flex justify-between text-sm">
-          <span className="text-text-secondary">Use Case:</span>
-          <span className="text-text-primary font-medium">
-            {config.type === 'chat'
-              ? chatUseCaseLabel(config.useCase)
-              : config.useCase.replace(/_/g, ' ')}
-          </span>
-        </div>
-        <div className="flex justify-between text-sm">
           <span className="text-text-secondary">Tools Enabled:</span>
           <span className="text-text-primary font-medium">{toolCount}</span>
         </div>
@@ -128,7 +120,7 @@ export function ReviewStep({ config, onPrev, onDeploy }: Props) {
               <p className="text-xs text-text-secondary">
                 Start a test call to hear how the agent responds turn by turn
               </p>
-              <TestConsole useCase={config.useCase} seed={config.name || 'review'} />
+              <TestConsole useCase={config.useCase ?? ''} seed={config.name || 'review'} />
             </div>
           </div>
         )}

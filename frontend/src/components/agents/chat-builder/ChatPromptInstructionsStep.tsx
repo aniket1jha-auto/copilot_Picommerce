@@ -57,7 +57,7 @@ export function ChatPromptInstructionsStep({ config, onSave, onNext, onPrev }: P
 
   const [steps, setSteps] = useState<InstructionStep[]>(() => {
     if (config.instructionSteps?.length) return config.instructionSteps;
-    return instructionStepsForUseCase(config.useCase, config.chatChannel ?? 'whatsapp');
+    return instructionStepsForUseCase(config.useCase ?? 'recovery_followup', config.chatChannel ?? 'whatsapp');
   });
   const [globalToolIds, setGlobalToolIds] = useState<string[]>(
     () => config.globalToolIds ?? config.builtInTools ?? [],
@@ -179,7 +179,7 @@ Key things to know:
   };
 
   const handleGenerateSteps = () => {
-    setSteps(instructionStepsForUseCase(config.useCase, config.chatChannel ?? 'whatsapp'));
+    setSteps(instructionStepsForUseCase(config.useCase ?? 'recovery_followup', config.chatChannel ?? 'whatsapp'));
     setSelectedTemplateId(null);
     setStepGenPrompt('');
     setStepGenOpen(false);

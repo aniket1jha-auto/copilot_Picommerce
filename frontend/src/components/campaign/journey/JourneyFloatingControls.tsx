@@ -22,7 +22,7 @@ export function JourneyFloatingControls({
   onShowShortcuts,
 }: JourneyFloatingControlsProps) {
   return (
-    <div className="absolute bottom-4 left-[72px] z-20 flex flex-col overflow-hidden rounded-md border border-border-subtle bg-surface-raised shadow-[var(--shadow-md)]">
+    <div className="absolute bottom-4 left-4 z-20 flex flex-col overflow-hidden rounded-md border border-border-subtle bg-surface-raised shadow-[var(--shadow-md)]">
       <ControlButton onClick={onAddNode} title="Add node ( / )" icon={<Plus size={16} strokeWidth={1.75} />} accent />
       <Divider />
       <ControlButton onClick={onZoomIn} title="Zoom in ( + )" icon={<ZoomIn size={16} strokeWidth={1.75} />} />

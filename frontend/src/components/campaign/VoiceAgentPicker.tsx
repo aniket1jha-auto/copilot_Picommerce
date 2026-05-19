@@ -152,8 +152,12 @@ function AttachedAgentCard({ agent, onDetach }: { agent: Agent; onDetach: () => 
               <AgentStatusPill status={agent.status} />
             </div>
             <div className="mt-0.5 text-[11px] text-text-secondary truncate">
-              {agent.config.voice} voice ·{' '}
-              <span className="capitalize">{agent.config.useCase}</span>
+              {agent.config.voice} voice
+              {agent.config.useCase && (
+                <>
+                  {' '}· <span className="capitalize">{agent.config.useCase}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -278,7 +282,7 @@ function VoiceAgentPickerModal({ open, onClose, agents, selectedId, onPick }: Pi
       (a) =>
         a.config.name.toLowerCase().includes(q) ||
         a.config.description?.toLowerCase().includes(q) ||
-        a.config.useCase.toLowerCase().includes(q),
+        a.config.useCase?.toLowerCase().includes(q),
     );
   }, [agents, query]);
 
@@ -374,8 +378,12 @@ function VoiceAgentPickerModal({ open, onClose, agents, selectedId, onPick }: Pi
                   </div>
                 )}
                 <div className="mt-1 text-[11px] text-text-tertiary">
-                  {a.config.voice} voice ·{' '}
-                  <span className="capitalize">{a.config.useCase}</span>
+                  {a.config.voice} voice
+                  {a.config.useCase && (
+                    <>
+                      {' '}· <span className="capitalize">{a.config.useCase}</span>
+                    </>
+                  )}
                   {(a.config.knowledgeBases?.length ?? 0) > 0 && (
                     <>
                       {' '}

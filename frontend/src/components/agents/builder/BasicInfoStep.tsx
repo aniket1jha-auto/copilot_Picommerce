@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import type { AgentConfiguration, AgentType } from '@/types/agent';
-import { USE_CASE_OPTIONS } from '@/data/agentConstants';
-import { CHAT_USE_CASES } from '@/data/chatAgentConstants';
+import { Phone, MessageSquare } from 'lucide-react';
+import type { AgentConfiguration } from '@/types/agent';
 
 interface Props {
   config: AgentConfiguration;
@@ -10,23 +9,24 @@ interface Props {
   isFirstStep: boolean;
 }
 
-function syncUseCaseForType(nextType: AgentType, prevUseCase: string): string {
-  if (nextType === 'chat') {
-    return CHAT_USE_CASES.some((u) => u.id === prevUseCase) ? prevUseCase : CHAT_USE_CASES[0].id;
-  }
-  return USE_CASE_OPTIONS.some((u) => u.id === prevUseCase) ? prevUseCase : USE_CASE_OPTIONS[0].id;
-}
-
+/**
+ * Basic info step — only Name + Description now.
+ *
+ * Agent type is committed before this screen (via the "+ Create
+ * Agent" dropdown on the Agents page → /agents/new?type=…) so we
+ * show it as a static chip instead of asking again. The Use Case
+ * field has been removed entirely; downstream steps don't depend
+ * on it anymore.
+ */
 export function BasicInfoStep({ config, onSave, onNext }: Props) {
   const [name, setName] = useState(config.name);
   const [description, setDescription] = useState(config.description);
-  const [type, setType] = useState(config.type);
-  const [useCase, setUseCase] = useState(() => syncUseCaseForType(config.type, config.useCase));
+  const type = config.type;
 
   const isValid = name.trim() && description.trim();
 
   const handleNext = () => {
-    onSave({ name, description, type, useCase });
+    onSave({ name, description });
     onNext();
   };
 
@@ -35,11 +35,26 @@ export function BasicInfoStep({ config, onSave, onNext }: Props) {
       <div>
         <h2 className="text-xl font-semibold text-text-primary mb-2">Basic Information</h2>
         <p className="text-sm text-text-secondary">
-          Let's start with the basics. What kind of agent are you building?
+          Name your agent and describe what it does. Type is already set from your previous
+          choice.
         </p>
       </div>
 
       <div className="space-y-5">
+        {/* Type chip — locked, set on entry. Users who want to change type can
+            go back to the Agents page and pick again from the dropdown. */}
+        <div>
+          <label className="block text-sm font-medium text-text-primary mb-2">Agent Type</label>
+          <div className="inline-flex items-center gap-2 rounded-md border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-cyan/10 text-cyan">
+              {type === 'voice' ? <Phone size={14} /> : <MessageSquare size={14} />}
+            </span>
+            <span className="text-[13px] font-semibold text-text-primary">
+              {type === 'voice' ? 'Voice Agent' : 'Chat Agent'}
+            </span>
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-text-primary mb-2">
             Agent Name *
@@ -48,7 +63,7 @@ export function BasicInfoStep({ config, onSave, onNext }: Props) {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Sales Outreach Agent"
+            placeholder={type === 'voice' ? 'e.g., Sales Outreach Agent' : 'e.g., Support Chat Bot'}
             className="w-full rounded-lg border border-[#E5E7EB] px-4 py-2.5 text-sm focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
             data-testid="agent-name-input"
           />
@@ -66,80 +81,6 @@ export function BasicInfoStep({ config, onSave, onNext }: Props) {
             className="w-full rounded-lg border border-[#E5E7EB] px-4 py-2.5 text-sm focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20"
             data-testid="agent-description-input"
           />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-text-primary mb-2">
-            Agent Type *
-          </label>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                const nextUseCase = syncUseCaseForType('voice', useCase);
-                setType('voice');
-                setUseCase(nextUseCase);
-                onSave({ type: 'voice', useCase: nextUseCase });
-              }}
-              className={`flex-1 rounded-lg border-2 p-4 text-left transition-all ${
-                type === 'voice'
-                  ? 'border-cyan bg-cyan/5'
-                  : 'border-[#E5E7EB] hover:border-cyan/50'
-              }`}
-              data-testid="agent-type-voice"
-            >
-              <div className="text-2xl mb-2">🎤</div>
-              <div className="font-semibold text-text-primary">Voice Agent</div>
-              <div className="text-xs text-text-secondary mt-1">
-                AI-powered phone calls with speech-to-speech
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const nextUseCase = syncUseCaseForType('chat', useCase);
-                setType('chat');
-                setUseCase(nextUseCase);
-                onSave({ type: 'chat', useCase: nextUseCase });
-              }}
-              className={`flex-1 rounded-lg border-2 p-4 text-left transition-all ${
-                type === 'chat'
-                  ? 'border-cyan bg-cyan/5'
-                  : 'border-[#E5E7EB] hover:border-cyan/50'
-              }`}
-              data-testid="agent-type-chat"
-            >
-              <div className="text-2xl mb-2">💬</div>
-              <div className="font-semibold text-text-primary">Chat Agent</div>
-              <div className="text-xs text-text-secondary mt-1">
-                WhatsApp, SMS, RCS, and custom web messaging
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-text-primary mb-2">
-            Use Case *
-          </label>
-          <div className="grid grid-cols-3 gap-3">
-            {(type === 'chat' ? CHAT_USE_CASES : USE_CASE_OPTIONS).map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => setUseCase(option.id)}
-                className={`rounded-lg border-2 p-3 text-left transition-all ${
-                  useCase === option.id
-                    ? 'border-cyan bg-cyan/5'
-                    : 'border-[#E5E7EB] hover:border-cyan/50'
-                }`}
-                data-testid={`use-case-${option.id}`}
-              >
-                <div className="text-xl mb-1">{option.icon}</div>
-                <div className="text-sm font-medium text-text-primary">{option.label}</div>
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 
