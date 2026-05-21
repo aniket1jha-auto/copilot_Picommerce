@@ -824,11 +824,20 @@ interface AIInsightsProps {
 }
 
 export function CampaignAIInsights({ campaignId, onDismiss }: AIInsightsProps) {
-  const recs = useRecommendationsStore((s) =>
-    campaignId ? s.forCampaign(campaignId) : s.recommendations,
-  );
+  // Subscribe to the raw array — selecting `s.forCampaign(...)` would
+  // return a fresh filtered array on every snapshot, which trips
+  // React 18's "getSnapshot should be cached" guard and blanks the
+  // page. Filter inside useMemo instead so the reference is stable.
+  const allRecs = useRecommendationsStore((s) => s.recommendations);
   const dismissRec = useRecommendationsStore((s) => s.dismiss);
 
+  const recs = useMemo(
+    () =>
+      campaignId
+        ? allRecs.filter((r) => r.campaignId === campaignId || r.campaignId === null)
+        : allRecs,
+    [allRecs, campaignId],
+  );
   const pendingRecs = useMemo(() => recs.filter((r) => r.status === 'pending'), [recs]);
   const appliedRecs = useMemo(() => recs.filter((r) => r.status === 'applied'), [recs]);
 

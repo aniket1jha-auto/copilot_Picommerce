@@ -58,13 +58,21 @@ export function CopilotChatPane({ onFinalize, campaignId, initialRecommendationI
   const setMessages = useCopilotStore((s) => s.setMessages);
   const setHandedOff = useCopilotStore((s) => s.setHandedOff);
 
-  // Recommendations
-  const recs = useRecommendationsStore((s) =>
-    campaignId ? s.forCampaign(campaignId) : s.recommendations,
-  );
+  // Recommendations — subscribe to the raw array. Selecting through
+  // `s.forCampaign(...)` returns a fresh filtered array each call,
+  // which trips React 18's getSnapshot-must-be-cached guard and can
+  // blank the page. Filter via useMemo instead.
+  const allRecs = useRecommendationsStore((s) => s.recommendations);
   const applyRec = useRecommendationsStore((s) => s.apply);
   const dismissRec = useRecommendationsStore((s) => s.dismiss);
 
+  const recs = useMemo(
+    () =>
+      campaignId
+        ? allRecs.filter((r) => r.campaignId === campaignId || r.campaignId === null)
+        : allRecs,
+    [allRecs, campaignId],
+  );
   const pendingRecs = useMemo(() => recs.filter((r) => r.status === 'pending'), [recs]);
   const recentlyAppliedRecs = useMemo(
     () => recs.filter((r) => r.status === 'applied').slice(0, 3),
