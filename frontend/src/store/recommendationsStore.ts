@@ -40,17 +40,20 @@ export interface Recommendation {
 }
 
 /**
- * Seed data — copy of the old INITIAL_PENDING_INSIGHTS from
- * CampaignSections.tsx, now scoped to specific demo campaigns.
- * `campaignId: null` would mean workspace-wide; we anchor to a
- * representative campaign for the demo flow.
+ * Seed data — pending recommendations distributed across the demo
+ * campaigns in `base/campaigns.ts` so every campaign card has
+ * something waiting for approval.
+ *
+ * Mix of categories (audience / channel / timing / content / budget /
+ * flow) and risk levels so the UI demonstrates variety. Each rec is
+ * anchored to a specific campaign via `campaignId`; `campaignId: null`
+ * would indicate workspace-wide.
  */
-const DEMO_CAMPAIGN_ID = 'campaign-1';
-
 const SEED_RECOMMENDATIONS: Recommendation[] = [
+  /* ─── camp-001 — High-LTV Re-engagement ─────────────────────────── */
   {
-    id: 'rec-1',
-    campaignId: DEMO_CAMPAIGN_ID,
+    id: 'rec-001-1',
+    campaignId: 'camp-001',
     kind: 'audience',
     title: 'Pause underperforming sub-segment',
     description:
@@ -64,8 +67,8 @@ const SEED_RECOMMENDATIONS: Recommendation[] = [
     createdAt: '2026-04-04T08:00:00Z',
   },
   {
-    id: 'rec-2',
-    campaignId: DEMO_CAMPAIGN_ID,
+    id: 'rec-001-2',
+    campaignId: 'camp-001',
     kind: 'channel',
     title: 'Add field executive for high-value non-converters',
     description: '412 high-value users (LTV > ₹15K) have not converted after 3 channel touchpoints',
@@ -78,8 +81,8 @@ const SEED_RECOMMENDATIONS: Recommendation[] = [
     createdAt: '2026-04-05T10:00:00Z',
   },
   {
-    id: 'rec-3',
-    campaignId: DEMO_CAMPAIGN_ID,
+    id: 'rec-001-3',
+    campaignId: 'camp-001',
     kind: 'timing',
     title: 'Extend campaign for weekend responders',
     description:
@@ -89,6 +92,154 @@ const SEED_RECOMMENDATIONS: Recommendation[] = [
     risk: 'low',
     status: 'pending',
     createdAt: '2026-04-06T07:30:00Z',
+  },
+
+  /* ─── camp-002 — KYC Completion Drive ───────────────────────────── */
+  {
+    id: 'rec-002-1',
+    campaignId: 'camp-002',
+    kind: 'content',
+    title: 'Promote winning WhatsApp variant earlier',
+    description:
+      'Variant C (with Aadhaar OTP step-by-step) has 38% higher CTR than the other two after 48 hours of testing.',
+    recommendation:
+      'Cut the A/B test short and route 100% of remaining WhatsApp traffic to Variant C',
+    estimatedImpact: 'Estimated +1,200 KYCs completed over the remaining campaign window',
+    risk: 'low',
+    status: 'pending',
+    createdAt: '2026-04-12T09:15:00Z',
+  },
+  {
+    id: 'rec-002-2',
+    campaignId: 'camp-002',
+    kind: 'flow',
+    title: 'Skip SMS for users who already opened WhatsApp',
+    description:
+      '18,400 users opened the WhatsApp KYC reminder but the SMS follow-up still fires 24h later — duplicate touch.',
+    recommendation:
+      'Add a condition node: if WhatsApp was opened, skip the SMS branch and go straight to AI Voice for non-converters.',
+    estimatedImpact: 'Save ~₹11,000 in SMS costs and reduce opt-outs by an estimated 8%',
+    risk: 'low',
+    status: 'pending',
+    createdAt: '2026-04-13T11:00:00Z',
+  },
+  {
+    id: 'rec-002-3',
+    campaignId: 'camp-002',
+    kind: 'audience',
+    title: 'Reduce field-executive load on tier-2 cities',
+    description:
+      'Field exec completion rate in tier-2 cities (32%) is 2x WhatsApp, but the cost-per-completion is ₹208 vs ₹14 on WhatsApp.',
+    recommendation:
+      'Route tier-2 users to WhatsApp + AI Voice first; reserve field execs for tier-1 users with LTV > ₹50K.',
+    estimatedImpact: 'Cut field-exec spend by ~40% with negligible drop in completion volume',
+    risk: 'medium',
+    status: 'pending',
+    createdAt: '2026-04-14T07:45:00Z',
+  },
+
+  /* ─── camp-003 — Festival Cashback Promo ────────────────────────── */
+  {
+    id: 'rec-003-1',
+    campaignId: 'camp-003',
+    kind: 'timing',
+    title: 'Move WhatsApp sends to 7-9 PM window',
+    description:
+      'Opens are concentrated in the 7-9 PM evening window (54% of all opens) but sends happen at 10 AM.',
+    recommendation:
+      'Switch the WhatsApp step to "Smart + AI" send time so each contact gets the message at their personal peak.',
+    estimatedImpact: 'Open rate likely to lift from 41% to ~58%',
+    risk: 'low',
+    status: 'pending',
+    createdAt: '2026-04-20T06:30:00Z',
+  },
+  {
+    id: 'rec-003-2',
+    campaignId: 'camp-003',
+    kind: 'budget',
+    title: 'Reallocate RCS spend to WhatsApp',
+    description:
+      'RCS has 14% delivery on this audience (cohort skews to older Android phones without RCS).',
+    recommendation:
+      'Pause the RCS branch and shift ₹1.2L of remaining budget to WhatsApp + SMS fallback.',
+    estimatedImpact: 'Roughly +9,000 effective deliveries with no extra spend',
+    risk: 'low',
+    status: 'pending',
+    createdAt: '2026-04-21T10:10:00Z',
+  },
+
+  /* ─── camp-004 — Loan Product Cross-sell ────────────────────────── */
+  {
+    id: 'rec-004-1',
+    campaignId: 'camp-004',
+    kind: 'audience',
+    title: 'Exclude users with active loans',
+    description:
+      '2,180 contacts in the segment already have an active loan in good standing — the cross-sell flow is dunning them anyway.',
+    recommendation:
+      'Add an audience filter "active_loans = 0" to the entry node.',
+    estimatedImpact: 'Prevents ~2,180 noisy contacts; expected drop in opt-outs of 12-15%',
+    risk: 'low',
+    status: 'pending',
+    createdAt: '2026-04-28T08:00:00Z',
+  },
+  {
+    id: 'rec-004-2',
+    campaignId: 'camp-004',
+    kind: 'content',
+    title: 'Add EMI-calculator link to the WhatsApp message',
+    description:
+      'Reply text analysis shows 31% of inbound replies ask "how much EMI" — the current message just states "starting ₹999/mo".',
+    recommendation:
+      'Update the WhatsApp template to include a CTA button linking to the EMI calculator landing page.',
+    estimatedImpact: 'Click-through rate likely to lift by 18-22%',
+    risk: 'low',
+    status: 'pending',
+    createdAt: '2026-04-29T09:30:00Z',
+  },
+  {
+    id: 'rec-004-3',
+    campaignId: 'camp-004',
+    kind: 'flow',
+    title: 'Add AI voice retry for callbacks-requested',
+    description:
+      '640 users responded "Call me" on WhatsApp but no voice step exists — they\'re currently dropping out.',
+    recommendation:
+      'Wire a Voice agent node from the "interested" branch of the WhatsApp message.',
+    estimatedImpact: 'Recover ~640 high-intent leads; expected +90-130 conversions',
+    risk: 'medium',
+    status: 'pending',
+    createdAt: '2026-04-30T11:00:00Z',
+  },
+
+  /* ─── camp-005 — Merchant Onboarding ────────────────────────────── */
+  {
+    id: 'rec-005-1',
+    campaignId: 'camp-005',
+    kind: 'timing',
+    title: 'Send merchant nudges Tuesday-Thursday only',
+    description:
+      'Weekend response rate is 4% vs 21% mid-week. Sends still go out 7 days a week.',
+    recommendation:
+      'Restrict the WhatsApp send window to Tue/Wed/Thu, 11 AM - 5 PM IST.',
+    estimatedImpact: 'Roughly +35% reply rate without changing message or audience',
+    risk: 'low',
+    status: 'pending',
+    createdAt: '2026-05-02T07:15:00Z',
+  },
+  {
+    id: 'rec-005-2',
+    campaignId: 'camp-005',
+    kind: 'channel',
+    title: 'Add SMS fallback for non-WhatsApp merchants',
+    description:
+      '14% of merchants in the segment don\'t have WhatsApp Business installed — they\'re receiving no message today.',
+    recommendation:
+      'Add an SMS fallback step that fires when WhatsApp delivery fails.',
+    estimatedImpact: 'Roughly +2,400 reachable merchants',
+    risk: 'low',
+    status: 'pending',
+    createdAt: '2026-05-03T08:45:00Z',
   },
 ];
 
